@@ -1,0 +1,2975 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>BALE ASUH LOTIM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    html, body {
+      height: 100%;
+      min-height: 100dvh;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #f8fafc;
+      margin: 0;
+      padding: 0;
+    }
+    .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+    .loader-spin { border-top-color: #0f766e; animation: spin 0.8s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    footer { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+    @media print {
+      .no-print { display: none !important; }
+      body, html { background: #ffffff !important; height: auto !important; min-height: auto !important; }
+      main { padding: 0 !important; max-width: 100% !important; }
+      .print-card { break-inside: avoid; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="text-slate-800 min-h-[100dvh] flex flex-col bg-slate-50">
+
+  <!-- LOADING OVERLAY -->
+  <div id="globalLoader" class="fixed inset-0 bg-slate-900/40 z-50 hidden flex items-center justify-center backdrop-blur-xs no-print">
+    <div class="bg-white px-6 py-5 rounded-2xl shadow-xl flex items-center gap-4">
+      <div class="w-7 h-7 border-4 border-slate-200 rounded-full loader-spin"></div>
+      <span class="font-medium text-slate-700" id="loaderText">Memuat data...</span>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden px-5 py-3.5 rounded-xl shadow-lg text-white text-sm font-medium transition-all no-print"></div>
+
+  <!-- NAVBAR -->
+  <header class="bg-teal-800 text-white shadow-md sticky top-0 z-30 no-print">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 md:py-3 flex flex-wrap items-center justify-between gap-2.5">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('ota_catalog')">
+        <div class="w-9 h-9 md:w-10 md:h-10 bg-white/15 rounded-xl flex items-center justify-center text-teal-200 text-lg md:text-xl">
+          <i class="fa-solid fa-hands-holding-child"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-base md:text-lg leading-tight tracking-wide">BALE ASUH LOTIM</h1>
+          <p class="text-[11px] md:text-xs text-teal-200">Gerakan Orang Tua Asuh Cegah Stunting 3B</p>
+        </div>
+      </div>
+
+      <div id="navAuthArea" class="flex items-center gap-2">
+        <button onclick="openModal('modalLogin')" class="bg-white text-teal-800 hover:bg-teal-50 px-3.5 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold shadow-sm transition">
+          <i class="fa-solid fa-right-to-bracket mr-1"></i> Masuk Portal
+        </button>
+        <button onclick="openRegOtaModal()" class="bg-amber-400 hover:bg-amber-300 text-slate-900 px-3.5 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold shadow-sm transition">
+          <i class="fa-solid fa-user-plus mr-1"></i> Daftar OTA
+        </button>
+      </div>
+    </div>
+
+    <!-- PUBLIC SUB-NAV (TAMPIL SEBELUM LOGIN) -->
+    <div id="publicNavBar" class="bg-teal-900/60 border-t border-teal-700/60">
+      <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs md:text-sm">
+        <div class="flex flex-wrap gap-2">
+          <button id="pubTabCatalog" onclick="switchView('ota_catalog')" class="px-3.5 py-1.5 rounded-lg bg-white text-teal-900 font-bold shadow-xs transition">
+            <i class="fa-solid fa-store mr-1.5"></i>Etalase Sasaran 3B
+          </button>
+          <button id="pubTabExec" onclick="switchView('exec_dashboard')" class="px-3.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white font-semibold transition">
+            <i class="fa-solid fa-chart-pie mr-1.5"></i>Dashboard Eksekutif (Pimpinan)
+          </button>
+        </div>
+        <span class="text-[11px] text-teal-200 hidden sm:inline"><i class="fa-solid fa-unlock mr-1"></i>Akses Publik &amp; Pimpinan (Tanpa Login)</span>
+      </div>
+    </div>
+
+    <!-- SUB-NAVIGATION BERDASARKAN ROLE (SETELAH LOGIN) -->
+    <div id="roleNavBar" class="hidden bg-teal-900/60 border-t border-teal-700/60">
+      <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+        <div id="roleMenuLinks" class="flex flex-wrap gap-2"></div>
+        <div class="flex items-center gap-3">
+          <span id="userBadge" class="text-teal-100 text-xs bg-teal-950/60 px-3 py-1 rounded-full"></span>
+          <button onclick="logout()" class="text-rose-200 hover:text-white text-xs font-semibold">
+            <i class="fa-solid fa-power-off mr-1"></i> Keluar
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="max-w-7xl w-full mx-auto px-4 py-5 md:py-6 flex-1">
+
+    <!-- ========================================================= -->
+    <!-- VIEW 0: DASHBOARD EKSEKUTIF PIMPINAN (TANPA LOGIN)        -->
+    <!-- ========================================================= -->
+    <section id="view_exec_dashboard" class="view-section hidden">
+      <div class="bg-gradient-to-r from-slate-900 via-teal-900 to-emerald-900 rounded-2xl p-5 md:p-6 text-white mb-6 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-widest text-amber-300 mb-1">
+            <i class="fa-solid fa-landmark mr-1"></i> Ringkasan Eksekutif Pengambil Kebijakan &bull; TPPS / TPG Lotim
+          </div>
+          <h2 class="text-xl md:text-2xl font-extrabold">Dashboard Kinerja BALE ASUH LOTIM</h2>
+          <p class="text-xs text-teal-100 mt-1">Pemantauan real-time cakupan Orang Tua Asuh (GENTING), peta ketertinggalan wilayah, dan tingkat graduasi stunting 3B.</p>
+          <div class="text-[11px] text-teal-300 mt-1.5" id="execLastUpdate">Diperbarui: -</div>
+        </div>
+        <div class="flex flex-wrap gap-2 no-print">
+          <button onclick="refreshExecutiveData()" class="bg-white/15 hover:bg-white/25 text-white px-4 py-2 rounded-lg text-xs font-semibold">
+            <i class="fa-solid fa-rotate mr-1.5"></i> Muat Ulang
+          </button>
+          <button onclick="window.print()" class="bg-amber-400 hover:bg-amber-300 text-slate-900 px-4 py-2 rounded-lg text-xs font-bold shadow-sm">
+            <i class="fa-solid fa-file-pdf mr-1.5"></i> Cetak Executive Summary (PDF)
+          </button>
+        </div>
+      </div>
+
+      <!-- BLOK 1: HEADLINE KPI (5 KARTU) -->
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
+        <div class="print-card bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-[11px] font-bold text-slate-500 uppercase">Sasaran 3B Terverifikasi</div>
+          <div class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-1" id="execKpiTotal">0</div>
+          <div class="text-[11px] text-slate-500 mt-1" id="execKpiPrio">P1: 0 &bull; P2: 0 &bull; P3: 0</div>
+        </div>
+
+        <div class="print-card bg-sky-50 p-4 rounded-xl border border-sky-200">
+          <div class="text-[11px] font-bold text-sky-700 uppercase">Cakupan Asuh OTA</div>
+          <div class="text-2xl md:text-3xl font-extrabold text-sky-900 mt-1" id="execKpiCakupanPct">0%</div>
+          <div class="text-[11px] text-sky-700 mt-1" id="execKpiCakupanSub">0 dari 0 sasaran</div>
+        </div>
+
+        <div class="print-card bg-amber-50 p-4 rounded-xl border border-amber-200">
+          <div class="text-[11px] font-bold text-amber-800 uppercase">Nilai Gotong Royong</div>
+          <div class="text-xl md:text-2xl font-extrabold text-amber-900 mt-1" id="execKpiRupiah">Rp 0</div>
+          <div class="text-[11px] text-amber-700 mt-1" id="execKpiTransaksi">0 komitmen OTA</div>
+        </div>
+
+        <div class="print-card bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+          <div class="text-[11px] font-bold text-emerald-700 uppercase">Graduasi Tuntas</div>
+          <div class="text-2xl md:text-3xl font-extrabold text-emerald-900 mt-1" id="execKpiGradPct">0%</div>
+          <div class="text-[11px] text-emerald-700 mt-1" id="execKpiGradSub">0 sasaran lulus</div>
+        </div>
+
+        <div class="print-card bg-rose-50 p-4 rounded-xl border border-rose-200 col-span-2 lg:col-span-1">
+          <div class="text-[11px] font-bold text-rose-700 uppercase">Early Warning (Tren T)</div>
+          <div class="text-2xl md:text-3xl font-extrabold text-rose-800 mt-1" id="execKpiEw">0</div>
+          <div class="text-[11px] text-rose-600 mt-1">Butuh atensi Puskesmas</div>
+        </div>
+      </div>
+
+      <!-- BLOK 2: RADAR WILAYAH PER KECAMATAN -->
+      <div class="print-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h3 class="text-sm md:text-base font-bold text-slate-800"><i class="fa-solid fa-map-location-dot text-teal-700 mr-1.5"></i>Radar Kinerja Wilayah per Kecamatan</h3>
+            <p class="text-xs text-slate-500">Diurutkan berdasarkan jumlah sasaran yang belum mendapat OTA (merah) untuk prioritas arahan pimpinan.</p>
+          </div>
+        </div>
+        <div class="relative h-72 md:h-80 w-full">
+          <canvas id="chartKecamatan"></canvas>
+        </div>
+      </div>
+
+      <!-- BLOK 3: 6 BENTUK BANTUAN & KONTRIBUSI PENTAHELIX -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="print-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 class="text-sm md:text-base font-bold text-slate-800 mb-1"><i class="fa-solid fa-boxes-stacked text-teal-700 mr-1.5"></i>Peta Kebutuhan 6 Bentuk Bantuan GENTING</h3>
+          <p class="text-xs text-slate-500 mb-4">Distribusi kebutuhan riil sasaran 3B terverifikasi di lapangan.</p>
+          <div class="relative h-64 w-full">
+            <canvas id="chartNeeds"></canvas>
+          </div>
+        </div>
+
+        <div class="print-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 class="text-sm md:text-base font-bold text-slate-800 mb-1"><i class="fa-solid fa-people-group text-teal-700 mr-1.5"></i>Kontribusi Unsur Pentahelix (OTA)</h3>
+          <p class="text-xs text-slate-500 mb-4">Proporsi partisipasi mitra berdasarkan kategori Orang Tua Asuh.</p>
+          <div class="relative h-64 w-full flex items-center justify-center">
+            <canvas id="chartPentahelix"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOK 4: EFEKTIVITAS 3 MEKANISME PENYALURAN -->
+      <div class="print-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <h3 class="text-sm md:text-base font-bold text-slate-800 mb-1"><i class="fa-solid fa-truck-fast text-teal-700 mr-1.5"></i>Efektivitas 3 Mekanisme Penyaluran (Kepmen 158/2026)</h3>
+        <p class="text-xs text-slate-500 mb-4">Sebaran saluran pelaksanaan bantuan OTA yang tercatat dalam sistem.</p>
+        <div id="execMekanismeGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- VIEW 1: PORTAL OTA - ETALASE SASARAN PRIORITAS (ANONIM)   -->
+    <!-- ========================================================= -->
+    <section id="view_ota_catalog" class="view-section">
+      <div class="bg-gradient-to-r from-teal-700 to-emerald-700 rounded-2xl p-5 md:p-6 text-white mb-5 md:mb-6 shadow-md">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span class="inline-block bg-white/20 text-xs font-semibold px-3 py-1 rounded-full mb-2">
+              <i class="fa-solid fa-shield-halved mr-1"></i> Standar GENTING 158/2026 &bull; Identitas Anonim
+            </span>
+            <h2 class="text-xl md:text-2xl font-bold">Etalase Sasaran Prioritas 3B Lombok Timur</h2>
+            <p class="text-teal-100 text-xs md:text-sm mt-1">Bantuan Nutrisi berbasis 30 Slot Hari Makan (Rp 15.000/hari) atau 1 Paket Tuntas untuk Bantuan Non-Nutrisi (RTLH, Jamban, Air Bersih, Ekonomi, Edukasi).</p>
+          </div>
+          <div class="flex gap-3 text-center">
+            <div class="bg-white/15 px-4 py-2.5 rounded-xl flex-1 md:flex-none">
+              <div class="text-2xl font-bold" id="statCatalogTotal">0</div>
+              <div class="text-xs text-teal-100">Sasaran Tayang</div>
+            </div>
+            <div class="bg-white/15 px-4 py-2.5 rounded-xl flex-1 md:flex-none">
+              <div class="text-2xl font-bold text-amber-300" id="statCatalogP1">0</div>
+              <div class="text-xs text-teal-100">Prioritas P1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTER BAR OTA -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-5 md:mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <select id="filterOtaKec" onchange="onFilterOtaKecChange()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          <option value="">Semua Kecamatan</option>
+        </select>
+        <select id="filterOtaDesa" onchange="renderOtaCatalog(true)" class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          <option value="">Semua Desa/Kelurahan</option>
+        </select>
+        <select id="filterOtaPrioritas" onchange="renderOtaCatalog(true)" class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          <option value="">Semua Prioritas (P1-P3)</option>
+          <option value="P1">Prioritas P1 (Sangat Mendesak)</option>
+          <option value="P2">Prioritas P2</option>
+          <option value="P3">Prioritas P3</option>
+        </select>
+        <select id="filterOtaIntervensi" onchange="renderOtaCatalog(true)" class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          <option value="">Semua Kategori Intervensi</option>
+        </select>
+        <select id="filterOtaStatus" onchange="renderOtaCatalog(true)" class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          <option value="">Semua Status Asuh</option>
+          <option value="Belum Ada OTA">Belum Ada OTA</option>
+          <option value="Proses Micro-OTA">Proses Micro-OTA</option>
+          <option value="Sedang Diasuh">Sedang Diasuh</option>
+          <option value="Graduasi Tuntas">Graduasi Tuntas</option>
+        </select>
+      </div>
+
+      <!-- GRID KARTU SASARAN -->
+      <div id="otaCatalogGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5"></div>
+
+      <!-- PAGINATION ETALASE OTA -->
+      <div id="otaPagination" class="flex flex-wrap items-center justify-center gap-3 mt-6"></div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- VIEW 2: PORTAL OTA - ANAK ASUH SAYA                       -->
+    <!-- ========================================================= -->
+    <section id="view_ota_myasuh" class="view-section hidden">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Daftar Anak Asuh Saya</h2>
+          <p class="text-sm text-slate-500">Pantau perkembangan kesehatan bulanan sasaran yang Anda dukung secara transparan.</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="switchView('rapor_ota')" class="bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+            <i class="fa-solid fa-file-pdf mr-1.5"></i> Cetak Rapor Terpadu
+          </button>
+          <button onclick="loadMyAnakAsuh()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-sm font-medium">
+            <i class="fa-solid fa-rotate mr-1"></i> Muat Ulang
+          </button>
+        </div>
+      </div>
+      <div id="myAsuhContainer" class="space-y-4"></div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- VIEW 3: PORTAL LAPANGAN - FORM INPUT & REVISI SASARAN 3B  -->
+    <!-- ========================================================= -->
+    <section id="view_plkb_input" class="view-section hidden">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden max-w-4xl mx-auto">
+        <div id="formSasaranHeader" class="bg-teal-700 px-6 py-4 text-white flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 id="formSasaranTitle" class="text-lg font-bold"><i class="fa-solid fa-file-circle-plus mr-2"></i>Input & Screening Sasaran 3B (PIC Desa / PLKB)</h2>
+            <p id="formSasaranSub" class="text-xs text-teal-100 mt-0.5">Formulir otomatis menyesuaikan kolom input berdasarkan Status Sasaran (Ibu Hamil / Ibu Menyusui / Anak Baduta).</p>
+          </div>
+          <button type="button" id="btnCancelEditTop" onclick="cancelEditSasaran()" class="hidden bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Batal Revisi
+          </button>
+        </div>
+
+        <form id="formSasaran3B" onsubmit="submitSasaran3B(event)" class="p-5 md:p-6 space-y-6">
+          <input type="hidden" id="inEditIdAnonim" value="">
+
+          <div>
+            <h3 class="text-sm font-bold text-teal-700 uppercase tracking-wider mb-3 border-b pb-1">1. Wilayah Kerja & Identitas Keluarga</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Wilayah Kecamatan *</label>
+                <select id="inKecamatan" required onchange="populateDesaInput()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-slate-50"></select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Wilayah Desa / Kelurahan *</label>
+                <select id="inDesa" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-slate-50"></select>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Alamat Lengkap (Dusun / Lingkungan / RT / RW / Patokan) *</label>
+                <input type="text" id="inAlamatLengkap" required placeholder="Contoh: Dusun ..., RT 02 / RW 01 (dekat Masjid / Posyandu) — hanya tampil untuk petugas" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Kode Keluarga (NIK / No. KK) *</label>
+                <input type="text" id="inKodeKeluarga" required placeholder="Contoh: 520307..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Kepala Keluarga *</label>
+                <input type="text" id="inNamaKK" required placeholder="Nama sesuai KK" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Sasaran *</label>
+                <input type="text" id="inNamaSasaran" required placeholder="Nama Ibu / Anak Baduta" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Tgl. Lahir Sasaran *</label>
+                  <input type="date" id="inTglLahir" required onchange="hitungUsiaOtomatis()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Usia Sasaran (Otomatis)</label>
+                  <input type="text" id="inUsia" readonly placeholder="Auto" class="w-full border border-slate-200 bg-slate-100 rounded-lg px-3 py-2 text-sm font-semibold text-teal-800">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-bold text-teal-700 uppercase tracking-wider mb-3 border-b pb-1">2. Status Sasaran & Kesehatan</h3>
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Status Sasaran *</label>
+              <select id="inStatusSasaran" required onchange="toggleDynamicFields()" class="w-full border border-teal-400 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800"></select>
+            </div>
+
+            <div id="boxBumil" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-rose-50/70 p-4 rounded-xl border border-rose-200">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Status Kesehatan Bumil</label>
+                <select id="inStatusKesehatan" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"></select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Pemeriksaan Kehamilan</label>
+                <select id="inPeriksaHamil" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+                  <option value="Rutin (Sesuai Jadwal)">Rutin (Sesuai Jadwal)</option>
+                  <option value="Tidak Rutin">Tidak Rutin</option>
+                  <option value="Belum Pernah">Belum Pernah</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Konsumsi TTD (Tablet Tambah Darah)</label>
+                <select id="inKonsumsiTTD" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+                  <option value="Ya">Ya (Rutin)</option>
+                  <option value="Tidak">Tidak / Jarang</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="boxMenyusu" class="hidden bg-sky-50/70 p-4 rounded-xl border border-sky-200">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Status Menyusu & Pemberian Makanan</label>
+              <select id="inStatusMenyusu" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"></select>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-bold text-teal-700 uppercase tracking-wider mb-3 border-b pb-1">3. Lingkungan, Prioritas & Kebutuhan Intervensi</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Kondisi Rumah *</label>
+                <select id="inKondisiRumah" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"></select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Akses Air Bersih *</label>
+                <select id="inAirBersih" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"></select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Sudah Terima MBG 3B / PMT Penuh?</label>
+                <select id="inSudahMbg" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                  <option value="Belum">Belum</option>
+                  <option value="Sudah (Alihkan Non-Nutrisi)">Sudah (Alihkan Non-Nutrisi)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Status Prioritas Sasaran (P1 / P2 / P3) *</label>
+              <select id="inStatusPrioritas" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"></select>
+            </div>
+
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-slate-600 mb-2">Kategori Prioritas Kebutuhan Intervensi (Pilih minimal 1) *</label>
+              <div id="inIntervensiCheckboxes" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"></div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan / Masalah Lapangan *</label>
+              <textarea id="inKeterangan" required rows="2" placeholder="Jelaskan kondisi spesifik sasaran sebagai pertimbangan OTA (tanpa menyebut nama asli agar siap tayang)..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"></textarea>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-2 border-t">
+            <button type="button" id="btnCancelEditBottom" onclick="cancelEditSasaran()" class="hidden px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Batal Revisi</button>
+            <button type="reset" id="btnResetForm" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Reset</button>
+            <button type="submit" id="btnSubmitSasaran" class="bg-teal-700 hover:bg-teal-800 text-white px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm">
+              <i class="fa-solid fa-paper-plane mr-1.5"></i> Simpan & Kirim Verifikasi
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- VIEW 4: PORTAL LAPANGAN - DAFTAR SASARAN & VERIFIKASI     -->
+    <!-- ========================================================= -->
+    <section id="view_plkb_list" class="view-section hidden">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Daftar Sasaran Wilayah & Monitoring Bulanan</h2>
+          <p id="plkbListSub" class="text-sm text-slate-500">Gunakan tombol <strong>Revisi</strong> di kolom paling kiri jika ada kesalahan input atau perubahan prioritas intervensi.</p>
+        </div>
+        <button onclick="loadPlkbList()" class="bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+          <i class="fa-solid fa-rotate mr-1"></i> Refresh Data
+        </button>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="bg-slate-100 text-slate-600 text-xs uppercase">
+                <th class="p-3 border-b text-center w-24">Revisi</th>
+                <th class="p-3 border-b">ID Anonim</th>
+                <th class="p-3 border-b">Nama Sasaran / KK</th>
+                <th class="p-3 border-b">Desa / Alamat Lengkap</th>
+                <th class="p-3 border-b">Prioritas & Intervensi</th>
+                <th class="p-3 border-b">Verifikasi / OTA</th>
+                <th class="p-3 border-b text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="plkbTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+        <div id="plkbPagination" class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-slate-50 border-t text-xs"></div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- VIEW 5: COMMAND CENTER ADMIN OPD / TPPS                   -->
+    <!-- ========================================================= -->
+    <section id="view_admin_dash" class="view-section hidden">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Command Center BALE ASUH LOTIM</h2>
+          <p class="text-sm text-slate-500">Verifikasi sasaran masuk, validasi komitmen OTA, dan pemantauan Early Warning.</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="switchView('rapor_ota')" class="bg-amber-400 hover:bg-amber-500 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold">
+            <i class="fa-solid fa-file-lines mr-1.5"></i> Laporan Rapor OTA
+          </button>
+          <button onclick="loadAdminDashboard()" class="bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+            <i class="fa-solid fa-rotate mr-1"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-xs text-slate-500 font-semibold">Total Sasaran 3B</div>
+          <div class="text-2xl font-bold text-slate-800 mt-1" id="admTotal">0</div>
+        </div>
+        <div class="bg-rose-50 p-4 rounded-xl border border-rose-200">
+          <div class="text-xs text-rose-700 font-semibold">Prioritas P1</div>
+          <div class="text-2xl font-bold text-rose-800 mt-1" id="admP1">0</div>
+        </div>
+        <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
+          <div class="text-xs text-amber-700 font-semibold">Menunggu Verifikasi</div>
+          <div class="text-2xl font-bold text-amber-800 mt-1" id="admPending">0</div>
+        </div>
+        <div class="bg-sky-50 p-4 rounded-xl border border-sky-200">
+          <div class="text-xs text-sky-700 font-semibold">Ter-Matching OTA</div>
+          <div class="text-2xl font-bold text-sky-800 mt-1" id="admOTA">0</div>
+        </div>
+        <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+          <div class="text-xs text-emerald-700 font-semibold">Graduasi Tuntas</div>
+          <div class="text-2xl font-bold text-emerald-800 mt-1" id="admGraduasi">0</div>
+        </div>
+      </div>
+
+      <div id="admEarlyWarningBox" class="hidden bg-rose-50 border-l-4 border-rose-600 p-4 rounded-r-xl mb-6">
+        <h3 class="font-bold text-rose-800 text-sm mb-2"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Radar Early Warning (Berat Badan Tidak Naik / T)</h3>
+        <div id="admEarlyWarningList" class="space-y-1.5 text-xs text-rose-900"></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="bg-slate-800 text-white px-4 py-3 font-semibold text-sm">
+            <i class="fa-solid fa-clipboard-check mr-1.5"></i> Gerbang Verifikasi Sasaran Masuk (Dari PIC Desa / PLKB)
+          </div>
+          <div class="p-4 overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead>
+                <tr class="text-slate-500 border-b">
+                  <th class="pb-2">ID / Nama</th>
+                  <th class="pb-2">Wilayah & Alamat</th>
+                  <th class="pb-2">Prioritas</th>
+                  <th class="pb-2 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="admPendingBody" class="divide-y"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="bg-teal-800 text-white px-4 py-3 font-semibold text-sm">
+            <i class="fa-solid fa-handshake mr-1.5"></i> Validasi Komitmen Orang Tua Asuh (OTA)
+          </div>
+          <div class="p-4 overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead>
+                <tr class="text-slate-500 border-b">
+                  <th class="pb-2">OTA / Bentuk & Mekanisme</th>
+                  <th class="pb-2">ID Sasaran</th>
+                  <th class="pb-2">Nominal</th>
+                  <th class="pb-2 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody id="admKomitmenBody" class="divide-y"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- VIEW 6: LAPORAN RAPOR ANAK ASUH BERDASARKAN OTA (PDF/WA)  -->
+    <!-- ========================================================= -->
+    <section id="view_rapor_ota" class="view-section hidden">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-5 flex flex-col md:flex-row md:items-center justify-between gap-3 no-print">
+        <div id="raporOtaSelectorWrap" class="flex-1 flex flex-col sm:flex-row sm:items-center gap-2">
+          <label class="text-xs font-bold text-slate-600 uppercase whitespace-nowrap">Pilih Orang Tua Asuh (OTA):</label>
+          <select id="selectReportOta" onchange="loadConsolidatedReport(this.value)" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800">
+            <option value="">-- Memuat Daftar OTA --</option>
+          </select>
+        </div>
+        <div id="raporOtaOwnTitle" class="hidden">
+          <h2 class="text-base font-bold text-slate-800">Rapor Dampak Terpadu Orang Tua Asuh</h2>
+          <p class="text-xs text-slate-500">Dokumen resmi perkembangan seluruh sasaran 3B yang Anda asuh.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="btnWaOta" onclick="sendReportViaWA()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs md:text-sm font-semibold shadow-xs">
+            <i class="fa-brands fa-whatsapp mr-1.5"></i> Kirim Ringkasan WA
+          </button>
+          <button onclick="window.print()" class="bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg text-xs md:text-sm font-semibold shadow-xs">
+            <i class="fa-solid fa-print mr-1.5"></i> Cetak / Simpan PDF
+          </button>
+        </div>
+      </div>
+
+      <div id="printableOtaReport" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8 max-w-4xl mx-auto">
+        <div class="text-center py-12 text-slate-400 text-sm">
+          Silakan pilih Orang Tua Asuh (OTA) untuk menampilkan laporan rapor anak asuh.
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- VIEW 7: DAFTAR OTA LENGKAP & EDIT (KHUSUS ADMIN_OPD)      -->
+    <!-- ========================================================= -->
+    <section id="view_admin_ota_list" class="view-section hidden">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Daftar Orang Tua Asuh (OTA)</h2>
+          <p class="text-sm text-slate-500">Kelola data mitra/donatur OTA, reset password, atau aktif/nonaktifkan akun (khusus Admin OPD).</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="openRegOtaModal()" class="bg-amber-400 hover:bg-amber-500 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold shadow-xs">
+            <i class="fa-solid fa-user-plus mr-1.5"></i> Tambah OTA Baru
+          </button>
+          <button onclick="loadAdminOtaList()" class="bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+            <i class="fa-solid fa-rotate mr-1"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs mb-4 flex flex-col sm:flex-row gap-3">
+        <input type="text" id="searchOtaInput" oninput="renderAdminOtaTable()" placeholder="Cari nama OTA, username, atau kategori mitra..." class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm">
+        <select id="filterOtaAktif" onchange="renderAdminOtaTable()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm sm:w-48">
+          <option value="">Semua Status</option>
+          <option value="Aktif">Aktif</option>
+          <option value="Nonaktif">Nonaktif</option>
+        </select>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="bg-slate-100 text-slate-600 text-xs uppercase">
+              <th class="p-3 border-b text-center w-24">Edit</th>
+              <th class="p-3 border-b">Nama OTA / Username</th>
+              <th class="p-3 border-b">Kategori Mitra</th>
+              <th class="p-3 border-b">Kontak (WA)</th>
+              <th class="p-3 border-b">Kontribusi Asuh</th>
+              <th class="p-3 border-b text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody id="adminOtaTableBody" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t border-slate-200 py-4 px-4 text-center text-xs text-slate-500 mt-auto no-print">
+    BALE ASUH LOTIM &bull; Kabupaten Lombok Timur &bull; Developed by <span class="font-bold text-teal-700">umekka</span>
+  </footer>
+
+  <!-- ========================================================= -->
+  <!-- MODALS                                                    -->
+  <!-- ========================================================= -->
+
+  <!-- MODAL LOGIN -->
+  <div id="modalLogin" class="fixed inset-0 bg-slate-900/50 z-40 hidden flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-slate-800">Masuk Portal BALE ASUH</h3>
+        <button onclick="closeModal('modalLogin')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Username</label>
+          <input type="text" id="loginUser" required placeholder="admin / plkb_selong / pic_selong / ota_demo" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+          <input type="password" id="loginPass" required placeholder="••••••••" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div class="bg-slate-50 p-3 rounded-lg text-xs text-slate-500">
+          <strong>Akun Demo:</strong><br>
+          &bull; Admin: <code>admin</code> / <code>admin123</code><br>
+          &bull; PLKB: <code>plkb_selong</code> / <code>plkb123</code><br>
+          &bull; PIC Desa: <code>pic_selong</code> / <code>pic123</code><br>
+          &bull; OTA: <code>ota_demo</code> / <code>ota123</code>
+        </div>
+        <button type="submit" class="w-full bg-teal-700 hover:bg-teal-800 text-white py-2.5 rounded-lg font-semibold text-sm">Masuk</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL REGISTRASI / TAMBAH OTA -->
+  <div id="modalRegOTA" class="fixed inset-0 bg-slate-900/50 z-40 hidden flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-slate-800">Daftar Sebagai Orang Tua Asuh</h3>
+        <button onclick="closeModal('modalRegOTA')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+
+      <!-- KOTAK PERINGATAN JIKA NO. WA SUDAH TERDAFTAR -->
+      <div id="regDuplicateAlert" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-4 mb-4 text-xs text-amber-950 space-y-2.5">
+        <div class="font-bold text-amber-900 flex items-center gap-1.5">
+          <i class="fa-solid fa-circle-exclamation text-amber-600 text-base"></i>
+          Nomor WhatsApp Sudah Terdaftar!
+        </div>
+        <p id="regDupText" class="leading-relaxed"></p>
+        <div class="flex flex-wrap gap-2 pt-1">
+          <button type="button" id="btnDupGoLogin" class="flex-1 bg-teal-700 hover:bg-teal-800 text-white px-3 py-2 rounded-lg font-semibold text-center">
+            <i class="fa-solid fa-right-to-bracket mr-1"></i> Langsung Login
+          </button>
+          <a id="btnDupWaAdmin" href="#" target="_blank" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg font-semibold text-center">
+            <i class="fa-brands fa-whatsapp mr-1"></i> Minta Password
+          </a>
+        </div>
+      </div>
+
+      <form id="formRegOTA" onsubmit="handleRegOTA(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Lengkap / Instansi / Perusahaan *</label>
+          <input type="text" id="regNama" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori Mitra *</label>
+          <select id="regKategori" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+            <option value="ASN / Individu">ASN / Individu</option>
+            <option value="BUMN / BUMD">BUMN / BUMD</option>
+            <option value="Perusahaan Swasta (CSR)">Perusahaan Swasta (CSR)</option>
+            <option value="Baznas / Lembaga Filantropi">Baznas / Lembaga Filantropi</option>
+            <option value="Komunitas / Diaspora Lotim">Komunitas / Diaspora Lotim</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nomor WhatsApp (Kunci Akun) *</label>
+          <input type="text" id="regWa" required placeholder="08xxxxxxxxxx" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Username *</label>
+            <input type="text" id="regUsername" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Password *</label>
+            <input type="password" id="regPassword" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          </div>
+        </div>
+        <button type="submit" class="w-full bg-amber-400 hover:bg-amber-500 text-slate-900 py-2.5 rounded-lg font-bold text-sm mt-2">Simpan / Daftar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL EDIT AKUN OTA (KHUSUS ADMIN_OPD) -->
+  <div id="modalEditOTA" class="fixed inset-0 bg-slate-900/50 z-40 hidden flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-user-pen text-amber-500 mr-1.5"></i>Edit Data Orang Tua Asuh</h3>
+        <button onclick="closeModal('modalEditOTA')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <form onsubmit="submitEditOTA(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Username (Tidak dapat diubah)</label>
+          <input type="text" id="editOtaUsername" readonly class="w-full border border-slate-200 bg-slate-100 rounded-lg px-3 py-2 text-sm font-mono font-bold text-slate-600">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Lengkap / Instansi / Perusahaan *</label>
+          <input type="text" id="editOtaNama" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori Mitra *</label>
+          <select id="editOtaKategori" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+            <option value="ASN / Individu">ASN / Individu</option>
+            <option value="BUMN / BUMD">BUMN / BUMD</option>
+            <option value="Perusahaan Swasta (CSR)">Perusahaan Swasta (CSR)</option>
+            <option value="Baznas / Lembaga Filantropi">Baznas / Lembaga Filantropi</option>
+            <option value="Komunitas / Diaspora Lotim">Komunitas / Diaspora Lotim</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nomor WhatsApp *</label>
+          <input type="text" id="editOtaWa" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+            <input type="text" id="editOtaPassword" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Status Akun</label>
+            <select id="editOtaStatus" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold">
+              <option value="Aktif">Aktif</option>
+              <option value="Nonaktif">Nonaktif</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('modalEditOTA')" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Batal</button>
+          <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-5 py-2 rounded-lg font-bold text-sm">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL KOMITMEN OTA (DYNAMIC NEED-MATCHING & GENTING 158/2026) -->
+  <div id="modalCommitOTA" class="fixed inset-0 bg-slate-900/50 z-40 hidden flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-lg font-bold text-teal-800">Komitmen Orang Tua Asuh (GENTING)</h3>
+        <button onclick="closeModal('modalCommitOTA')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <div id="commitInfoBox" class="bg-teal-50 p-3 rounded-xl text-xs text-teal-900 mb-4 border border-teal-200"></div>
+
+      <form onsubmit="submitCommitOTA(event)" class="space-y-4">
+        <input type="hidden" id="commitIdAnonim">
+        <input type="hidden" id="commitSisaSlot">
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">1. Pilih Bentuk Bantuan (Sesuai Kebutuhan Sasaran) *</label>
+          <select id="commitBentukBantuan" onchange="onCommitBentukChange()" required class="w-full border border-teal-400 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800"></select>
+          <p id="commitMbgNotice" class="hidden text-[11px] text-amber-700 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Bantuan Nutrisi dikunci karena sasaran sudah menerima MBG 3B/PMT.</p>
+        </div>
+
+        <div id="commitNutrisiArea" class="space-y-3 bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-200">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Skema Dukungan Nutrisi (Standar Min. Rp 15.000/hari)</label>
+            <select id="commitSkema" onchange="updateCommitCalc()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold bg-white">
+              <option value="Micro-OTA">Micro-OTA (Patungan per Hari Makan @Rp 15.000/hari)</option>
+              <option value="OTA Penuh">OTA Penuh (Ambil Seluruh Sisa Slot Hari)</option>
+            </select>
+          </div>
+          <div id="commitSlotBox">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Jumlah Slot Hari Makan (1 – <span id="lblMaxSlot">30</span> hari)</label>
+            <input type="number" id="commitJumlahSlot" min="1" max="30" value="5" oninput="updateCommitCalc()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+          </div>
+          <div id="commitPeriodeBox" class="hidden">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Periode Komitmen Penuh</label>
+            <select id="commitPeriodeBulan" onchange="updateCommitCalc()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="1">1 Bulan (30 Hari)</option>
+              <option value="3">3 Bulan (90 Hari)</option>
+              <option value="6">6 Bulan (180 Hari)</option>
+            </select>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl flex justify-between items-center">
+            <span class="text-xs font-semibold text-amber-900">Estimasi Komitmen Nutrisi:</span>
+            <span class="text-lg font-bold text-amber-800" id="commitTotalRp">Rp 75.000</span>
+          </div>
+        </div>
+
+        <div id="commitFisikArea" class="hidden space-y-3 bg-sky-50/60 p-3.5 rounded-xl border border-sky-200">
+          <div class="text-xs font-bold text-sky-800"><i class="fa-solid fa-box-open mr-1"></i>Skema 1 Paket Tuntas (Nilai Disesuaikan Kondisi Wilayah)</div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Bentuk Dukungan</label>
+            <select id="commitBentukDukungan" onchange="onFisikModeChange()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="Pembiayaan (Rp)">Pembiayaan / Dana (Rp)</option>
+              <option value="Barang / Fisik / Paket">Barang / Fisik / Paket Langsung</option>
+            </select>
+          </div>
+          <div id="commitNominalFisikBox">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Estimasi Nominal Pembiayaan (Rp)</label>
+            <input type="number" id="commitNominalInput" min="0" step="50000" placeholder="Contoh: 2500000" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Uraian Paket Bantuan *</label>
+            <textarea id="commitUraianFisik" rows="2" placeholder="Contoh: 1 unit perbaikan jamban sehat / paket ternak ayam petelur..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"></textarea>
+          </div>
+        </div>
+
+        <div id="commitEdukasiArea" class="hidden space-y-2 bg-purple-50/60 p-3.5 rounded-xl border border-purple-200">
+          <div class="text-xs font-bold text-purple-800"><i class="fa-solid fa-chalkboard-user mr-1"></i>Skema 1 Paket Edukasi (Non-Nominal)</div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Uraian Kegiatan & Jadwal Pelaksanaan *</label>
+            <textarea id="commitUraianEdukasi" rows="2" placeholder="Contoh: Konseling gizi 1.000 HPK & pola asuh oleh akademisi/praktisi..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"></textarea>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">2. Mekanisme Penyaluran (Pelaksanaan) *</label>
+          <select id="commitMekanisme" onchange="onMekanismeChange()" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+            <option value="Lumbung GENTING Desa/Kelurahan (Kader DASHAT)">Lumbung GENTING Desa/Kelurahan (Kader DASHAT)</option>
+            <option value="Pihak Ketiga (Lembaga Pengelola)">Melalui Pihak Ketiga (Baznas / LAZ / Yayasan)</option>
+            <option value="Dikelola Langsung oleh OTA">Dikelola Langsung oleh OTA (Dipantau TPG Desa)</option>
+          </select>
+        </div>
+
+        <div id="commitPihakKetigaBox" class="hidden">
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Lembaga Pihak Ketiga *</label>
+          <input type="text" id="commitPihakKetiga" placeholder="Contoh: Baznas Kab. Lombok Timur / Yayasan..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+
+        <button type="submit" class="w-full bg-teal-700 hover:bg-teal-800 text-white py-2.5 rounded-lg font-semibold text-sm shadow-sm">
+          <i class="fa-solid fa-heart mr-1.5"></i> Konfirmasi Jadi Orang Tua Asuh
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL INPUT MONITORING BULANAN -->
+  <div id="modalMonitoring" class="fixed inset-0 bg-slate-900/50 z-40 hidden flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-lg font-bold text-slate-800">Input Monitoring Bulanan & Antropometri</h3>
+        <button onclick="closeModal('modalMonitoring')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <div id="monTargetHeader" class="bg-slate-100 p-3 rounded-xl text-xs font-semibold text-slate-700 mb-4"></div>
+      <form onsubmit="submitMonitoring(event)" class="space-y-3">
+        <input type="hidden" id="monIdAnonim">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Bulan Intervensi Ke-</label>
+            <input type="number" id="monBulanKe" min="1" value="1" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Penyaluran via DASHAT?</label>
+            <select id="monDashat" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              <option value="Ya">Ya (Kader DASHAT)</option>
+              <option value="Tidak">Tidak (Non-Nutrisi / Langsung)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Jenis Intervensi yang Diterima</label>
+          <input type="text" id="monJenis" required placeholder="Contoh: Paket Protein Hewani 30 hari / Jamban Sehat" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">BB (Kg)</label>
+            <input type="text" id="monBB" placeholder="8.5" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">TB (Cm)</label>
+            <input type="text" id="monTB" placeholder="72" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">LILA Bumil (Cm)</label>
+            <input type="text" id="monLILA" placeholder="23.5" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Status Tren Pertumbuhan</label>
+            <select id="monTren" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              <option value="N (Naik)">N (Naik / Membaik)</option>
+              <option value="T (Tidak Naik)">T (Tidak Naik - Early Warning)</option>
+              <option value="Stabil">Stabil</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Status Graduasi</label>
+            <select id="monGraduasi" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold">
+              <option value="Berjalan">Masih Berjalan</option>
+              <option value="Graduasi Tuntas">Graduasi Tuntas (Lulus)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Catatan Lapangan</label>
+          <textarea id="monCatatan" rows="2" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"></textarea>
+        </div>
+        <button type="submit" class="w-full bg-teal-700 hover:bg-teal-800 text-white py-2.5 rounded-lg font-semibold text-sm">Simpan Monitoring</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL RIWAYAT MONITORING SATUAN -->
+  <div id="modalRapor" class="fixed inset-0 bg-slate-900/50 z-40 hidden flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <div>
+          <h3 class="text-lg font-bold text-teal-800">Riwayat Perkembangan Sasaran</h3>
+          <p class="text-xs text-slate-500">BALE ASUH LOTIM &bull; Kabupaten Lombok Timur</p>
+        </div>
+        <button onclick="closeModal('modalRapor')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <div id="raporHeaderInfo" class="bg-slate-50 p-4 rounded-xl text-sm mb-4 border"></div>
+      <div id="raporTimeline" class="space-y-3"></div>
+    </div>
+  </div>
+
+<!-- ========================================================= -->
+  <!-- SUPABASE CLIENT & JEMBATAN MIGRASI DARI GAS               -->
+  <!-- ========================================================= -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://muygfyzinvfcsbyvvyjr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11eWdmeXppbnZmY3NieXZ2eWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUyMTc0NjAsImV4cCI6MjExMDc5MzQ2MH0.0mGbtcoxAaGJ2btdhMuh0QNVj4m8Nobuz5yCySgpdqg';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Helper Format Waktu WITA
+    function formatWita(dateObj = new Date()) {
+      const d = new Date(dateObj);
+      const opts = { timeZone: 'Asia/Makassar', day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+      return d.toLocaleString('id-ID', opts).replace('.', ':') + ' WITA';
+    }
+    function formatTs(dateObj = new Date()) {
+      const d = new Date(dateObj);
+      return d.toLocaleString('sv-SE', { timeZone: 'Asia/Makassar' });
+    }
+    function normalizeWa(wa) {
+      let clean = String(wa || '').replace(/[^0-9]/g, '');
+      if (clean.startsWith('0')) clean = '62' + clean.substring(1);
+      else if (clean.startsWith('8')) clean = '62' + clean;
+      return clean;
+    }
+    function calcDefaultTargetSlot(kategoriStr, sudahMbg) {
+      const needs = String(kategoriStr || '').toLowerCase();
+      const isMbg = String(sudahMbg || '').toLowerCase().startsWith('sudah');
+      return (needs.includes('bantuan nutrisi') && !isMbg) ? 30 : 1;
+    }
+
+    // Mapper Baris Database SQL -> Format Object Index.html
+    function mapSasaranRow(r) {
+      return {
+        ID_Sasaran_Anonim: r.id_sasaran_anonim,
+        Wilayah_Kecamatan: r.wilayah_kecamatan,
+        Wilayah_Desa_Kelurahan: r.wilayah_desa_kelurahan,
+        KODE_KELUARGA: r.kode_keluarga || '-',
+        NAMA_SASARAN: r.nama_sasaran,
+        TGL_LAHIR_SASARAN: r.tgl_lahir_sasaran || '',
+        USIA_SASARAN: r.usia_sasaran || '-',
+        STATUS_SASARAN: r.status_sasaran || '-',
+        NAMA_KEPALA_KELUARGA: r.nama_kepala_keluarga || '-',
+        Status_Kesehatan: r.status_kesehatan || '-',
+        Pemeriksaan_Kehamilan: r.pemeriksaan_kehamilan || '-',
+        Konsumsi_TTD: r.konsumsi_ttd || '-',
+        Status_Menyusu_MPASI: r.status_menyusu_mpasi || '-',
+        KONDISI_RUMAH: r.kondisi_rumah || '-',
+        AIR_BERSIH: r.air_bersih || '-',
+        Keterangan_Masalah: r.keterangan_masalah || '-',
+        KATEGORI_INTERVENSI: r.kategori_intervensi || '-',
+        STATUS_PRIORITAS: r.status_prioritas || '-',
+        Sudah_MBG_PMT: r.sudah_mbg_pmt || 'Belum',
+        Status_Verifikasi: r.status_verifikasi || 'Menunggu Verifikasi',
+        Status_OTA: r.status_ota || 'Belum Ada OTA',
+        Target_Slot: r.target_slot || 30,
+        Slot_Terisi: r.slot_terisi || 0,
+        Input_By: r.input_by || '-',
+        Timestamp: r.timestamp ? formatTs(r.timestamp) : '-',
+        Alamat_Lengkap: r.alamat_lengkap || '-'
+      };
+    }
+
+    function mapMonitoringRow(r) {
+      return {
+        ID_Log: r.id_log,
+        ID_Sasaran_Anonim: r.id_sasaran_anonim,
+        Bulan_Ke: r.bulan_ke,
+        Jenis_Intervensi: r.jenis_intervensi,
+        Via_DASHAT: r.via_dashat,
+        BB_Kg: r.bb_kg || '-',
+        TB_Cm: r.tb_cm || '-',
+        LILA_Cm: r.lila_cm || '-',
+        Status_Tren: r.status_tren,
+        Status_Graduasi: r.status_graduasi,
+        Catatan: r.catatan || '',
+        Input_By: r.input_by || '-',
+        Timestamp: r.timestamp ? formatTs(r.timestamp) : '-'
+      };
+    }
+
+    // ==================== BACKEND FUNCTIONS (SUPABASE) ====================
+    const SB_API = {
+      async getMasterData() {
+        const [{ data: refs, error: e1 }, { data: wils, error: e2 }] = await Promise.all([
+          sb.from('master_referensi').select('*').order('id'),
+          sb.from('master_wilayah').select('*').order('wilayah_kecamatan')
+        ]);
+        if (e1) throw e1;
+        if (e2) throw e2;
+
+        const referensi = {};
+        (refs || []).forEach(r => {
+          if (!referensi[r.kategori]) referensi[r.kategori] = [];
+          referensi[r.kategori].push(r.nilai);
+        });
+
+        const wilayah = {};
+        const kodeKecMap = {};
+        (wils || []).forEach(w => {
+          if (!wilayah[w.wilayah_kecamatan]) wilayah[w.wilayah_kecamatan] = [];
+          wilayah[w.wilayah_kecamatan].push(w.wilayah_desa_kelurahan);
+          kodeKecMap[w.wilayah_kecamatan] = w.kode_kec;
+        });
+
+        return { referensi, wilayah, kodeKecMap };
+      },
+
+      async getSasaranForOTA() {
+        const { data, error } = await sb.from('v_katalog_ota').select('*');
+        if (error) throw error;
+        return (data || []).map(r => ({
+          idAnonim: r.id_sasaran_anonim,
+          kecamatan: r.wilayah_kecamatan || '-',
+          desa: r.wilayah_desa_kelurahan || '-',
+          usia: r.usia_sasaran || '-',
+          statusSasaran: r.status_sasaran || '-',
+          statusKesehatan: r.status_kesehatan || '-',
+          statusMenyusu: r.status_menyusu_mpasi || '-',
+          kondisiRumah: r.kondisi_rumah || '-',
+          airBersih: r.air_bersih || '-',
+          masalah: r.keterangan_masalah || '-',
+          kategoriIntervensi: r.kategori_intervensi || '-',
+          prioritasKode: r.prioritas_kode || 'P1',
+          prioritasLengkap: r.status_prioritas || '-',
+          sudahMbgPmt: r.sudah_mbg_pmt || 'Belum',
+          statusOTA: r.status_ota || 'Belum Ada OTA',
+          targetSlot: Number(r.target_slot) || calcDefaultTargetSlot(r.kategori_intervensi, r.sudah_mbg_pmt),
+          slotTerisi: Number(r.slot_terisi) || 0
+        }));
+      },
+
+      async getExecutiveSummaryData() {
+        const [{ data: sasRows }, { data: matchRows }, { data: monRows }] = await Promise.all([
+          sb.from('v_katalog_ota').select('*'),
+          sb.from('transaksi_matching').select('*'),
+          sb.from('log_monitoring').select('id_sasaran_anonim, status_tren').eq('status_tren', 'T (Tidak Naik)')
+        ]);
+
+        let totalVerified = 0, p1 = 0, p2 = 0, p3 = 0, matchedCount = 0, graduasiCount = 0;
+        const kecMap = {};
+        const needsMap = {
+          'Bantuan Nutrisi': 0, 'Bantuan Jamban Sehat': 0, 'Bantuan Air Bersih': 0,
+          'Bantuan Rumah Layak Huni': 0, 'Edukasi': 0, 'Bantuan Pelatihan Pemberdayaan Ekonomi': 0
+        };
+
+        (sasRows || []).forEach(r => {
+          totalVerified++;
+          if (r.prioritas_kode === 'P1') p1++;
+          else if (r.prioritas_kode === 'P2') p2++;
+          else if (r.prioritas_kode === 'P3') p3++;
+
+          const kec = r.wilayah_kecamatan || 'Lainnya';
+          if (!kecMap[kec]) kecMap[kec] = { kec, graduasi: 0, diasuh: 0, belum: 0, total: 0 };
+          kecMap[kec].total++;
+
+          if (r.status_ota === 'Graduasi Tuntas') { graduasiCount++; matchedCount++; kecMap[kec].graduasi++; }
+          else if (r.status_ota === 'Sedang Diasuh' || r.status_ota === 'Proses Micro-OTA') { matchedCount++; kecMap[kec].diasuh++; }
+          else { kecMap[kec].belum++; }
+
+          String(r.kategori_intervensi || '').split(',').map(x => x.trim()).filter(Boolean).forEach(item => {
+            needsMap[item] = (needsMap[item] || 0) + 1;
+          });
+        });
+
+        let totalGotongRoyongRp = 0, totalTransaksi = 0;
+        const pentahelixMap = {};
+        const mekanismeMap = {
+          'Lumbung GENTING / DASHAT': 0,
+          'Pihak Ketiga (Baznas/LAZ/Yayasan)': 0,
+          'Dikelola Langsung oleh OTA': 0
+        };
+
+        (matchRows || []).forEach(m => {
+          totalTransaksi++;
+          const nom = Number(m.nominal_komitmen) || 0;
+          totalGotongRoyongRp += nom;
+          const kat = m.kategori_mitra || 'Lainnya';
+          if (!pentahelixMap[kat]) pentahelixMap[kat] = { count: 0, nominal: 0 };
+          pentahelixMap[kat].count++;
+          pentahelixMap[kat].nominal += nom;
+
+          const mek = String(m.mekanisme_penyaluran || '').toLowerCase();
+          if (mek.includes('pihak ketiga')) mekanismeMap['Pihak Ketiga (Baznas/LAZ/Yayasan)']++;
+          else if (mek.includes('langsung')) mekanismeMap['Dikelola Langsung oleh OTA']++;
+          else mekanismeMap['Lumbung GENTING / DASHAT']++;
+        });
+
+        const ewSet = new Set((monRows || []).map(x => x.id_sasaran_anonim));
+        const kecamatanList = Object.values(kecMap).sort((a, b) => b.belum - a.belum || b.total - a.total);
+
+        return {
+          kpi: {
+            totalVerified, p1, p2, p3, matchedCount,
+            matchedPct: totalVerified > 0 ? Math.round((matchedCount / totalVerified) * 100) : 0,
+            totalGotongRoyongRp, totalTransaksi, graduasiCount,
+            graduasiPct: totalVerified > 0 ? Math.round((graduasiCount / totalVerified) * 100) : 0,
+            earlyWarningCount: ewSet.size
+          },
+          kecamatanList, needsMap, pentahelixMap, mekanismeMap,
+          tglUpdate: formatWita()
+        };
+      },
+
+      async getInitialData() {
+        const [master, catalog, executive] = await Promise.all([
+          SB_API.getMasterData(),
+          SB_API.getSasaranForOTA(),
+          SB_API.getExecutiveSummaryData()
+        ]);
+        return { master, catalog, executive };
+      },
+
+      async loginUser(username, password) {
+        const uname = String(username || '').trim().toLowerCase();
+        const { data, error } = await sb.from('users').select('*').ilike('username', uname).eq('password', password).eq('status_aktif', 'Aktif').maybeSingle();
+        if (error) throw error;
+        if (!data) return { success: false, message: 'Username atau password salah, atau akun tidak aktif.' };
+        return {
+          success: true,
+          user: {
+            username: data.username,
+            nama: data.nama_lengkap,
+            role: String(data.role || '').trim().toUpperCase(),
+            kecamatan: String(data.wilayah_kecamatan || '').trim(),
+            desa: String(data.wilayah_desa || '').trim(),
+            kategoriMitra: data.kategori_mitra,
+            noWa: data.no_wa
+          }
+        };
+      },
+
+      async registerOTA(form) {
+        const uname = String(form.username || '').trim().toLowerCase();
+        const normInputWa = normalizeWa(form.noWa);
+        if (normInputWa.length < 10) return { success: false, message: 'Nomor WhatsApp tidak valid. Masukkan minimal 10 digit angka.' };
+
+        const { data: users, error } = await sb.from('users').select('*');
+        if (error) throw error;
+
+        let adminWa = '';
+        for (const u of (users || [])) {
+          if (String(u.role || '').toUpperCase() === 'ADMIN_OPD' && u.status_aktif === 'Aktif') {
+            const w = normalizeWa(u.no_wa);
+            if (w.length >= 10) { adminWa = w; break; }
+          }
+        }
+        for (const u of (users || [])) {
+          if (String(u.username || '').toLowerCase() === uname) {
+            return { success: false, message: 'Username sudah digunakan, silakan pilih username lain.' };
+          }
+          if (String(u.role || '').toUpperCase() === 'OTA' && normalizeWa(u.no_wa) === normInputWa) {
+            return { success: false, duplicateWa: true, existingUsername: u.username, adminWa, message: `Nomor WhatsApp ini sudah terdaftar dengan username: ${u.username}.` };
+          }
+        }
+
+        const { error: insErr } = await sb.from('users').insert({
+          username: uname, password: form.password, nama_lengkap: String(form.nama || '').trim(),
+          role: 'OTA', wilayah_kecamatan: '-', wilayah_desa: '-',
+          kategori_mitra: form.kategoriMitra, no_wa: String(form.noWa || '').trim(), status_aktif: 'Aktif'
+        });
+        if (insErr) throw insErr;
+        return { success: true, message: 'Registrasi Orang Tua Asuh berhasil!' };
+      },
+
+      async getOtaManagementList(user) {
+        if (!user || user.role !== 'ADMIN_OPD') return { success: false, message: 'Akses ditolak.', list: [] };
+        const [{ data: users }, { data: matches }] = await Promise.all([
+          sb.from('users').select('*').eq('role', 'OTA').order('created_at', { ascending: false }),
+          sb.from('transaksi_matching').select('*')
+        ]);
+        const statsMap = {};
+        (matches || []).forEach(m => {
+          const u = String(m.username_ota || '').toLowerCase();
+          if (!statsMap[u]) statsMap[u] = { sasaranSet: new Set(), totalSlot: 0, totalNominal: 0 };
+          statsMap[u].sasaranSet.add(m.id_sasaran_anonim);
+          statsMap[u].totalSlot += Number(m.jumlah_slot) || 0;
+          statsMap[u].totalNominal += Number(m.nominal_komitmen) || 0;
+        });
+        const list = (users || []).map(r => {
+          const st = statsMap[String(r.username).toLowerCase()] || { sasaranSet: new Set(), totalSlot: 0, totalNominal: 0 };
+          return {
+            username: r.username, password: r.password, nama: r.nama_lengkap,
+            kategoriMitra: r.kategori_mitra, noWa: r.no_wa, statusAktif: r.status_aktif,
+            totalSasaran: st.sasaranSet.size, totalSlot: st.totalSlot, totalNominal: st.totalNominal
+          };
+        });
+        return { success: true, list };
+      },
+
+      async updateOtaAccount(form, user) {
+        if (!user || user.role !== 'ADMIN_OPD') return { success: false, message: 'Akses ditolak.' };
+        const upd = {
+          nama_lengkap: String(form.nama || '').trim(),
+          kategori_mitra: form.kategoriMitra,
+          no_wa: String(form.noWa || '').trim(),
+          status_aktif: form.statusAktif
+        };
+        if (form.password && String(form.password).trim() !== '') upd.password = String(form.password).trim();
+        const { error } = await sb.from('users').update(upd).eq('username', form.username).eq('role', 'OTA');
+        if (error) throw error;
+        return { success: true, message: `Data OTA "${upd.nama_lengkap}" berhasil diperbarui.` };
+      },
+
+      async getSasaranForPLKB(kecamatan, desa, role) {
+        const { data, error } = await sb.from('data_sasaran_3b').select('*').order('timestamp', { ascending: false });
+        if (error) throw error;
+        const userKec = String(kecamatan || '').trim().toLowerCase();
+        const userDesaRaw = String(desa || '').trim();
+        const allowedDesas = userDesaRaw.split(',').map(d => d.trim().toLowerCase()).filter(Boolean);
+        const isAllDesa = userDesaRaw.toUpperCase() === 'SEMUA' || userDesaRaw === '' || userDesaRaw === '-';
+
+        return (data || []).filter(r => {
+          const rKec = String(r.wilayah_kecamatan || '').trim().toLowerCase();
+          const rDesa = String(r.wilayah_desa_kelurahan || '').trim().toLowerCase();
+          if (role === 'ADMIN_OPD' || userKec === 'semua') return true;
+          if (rKec === userKec) {
+            if (role === 'PLKB') return isAllDesa || allowedDesas.includes(rDesa);
+            if (role === 'PIC_DESA') return allowedDesas.includes(rDesa);
+          }
+          return false;
+        }).map(mapSasaranRow);
+      },
+
+      async saveSasaran3B(form, user) {
+        const kodeKel = String(form.kodeKeluarga || '').trim().toUpperCase();
+        const namaSas = String(form.namaSasaran || '').trim();
+        const { data: existing } = await sb.from('data_sasaran_3b').select('id_sasaran_anonim').ilike('kode_keluarga', kodeKel).ilike('nama_sasaran', namaSas);
+        if (existing && existing.length > 0) {
+          return { success: false, message: 'Data ganda terdeteksi! Sasaran dengan Kode Keluarga dan Nama tersebut sudah terdaftar.' };
+        }
+
+        const master = await SB_API.getMasterData();
+        const kodeKec = master.kodeKecMap[form.kecamatan] || 'LTM';
+        const { count } = await sb.from('data_sasaran_3b').select('*', { count: 'exact', head: true });
+        const idAnonim = `BALE-${kodeKec}-${String((count || 0) + 1).padStart(4, '0')}`;
+        const kategoriStr = form.kategoriIntervensi.join(', ');
+
+        const { error } = await sb.from('data_sasaran_3b').insert({
+          id_sasaran_anonim: idAnonim,
+          wilayah_kecamatan: form.kecamatan,
+          wilayah_desa_kelurahan: form.desa,
+          kode_keluarga: kodeKel,
+          nama_sasaran: namaSas,
+          tgl_lahir_sasaran: form.tglLahir,
+          usia_sasaran: form.usiaSasaran,
+          status_sasaran: form.statusSasaran,
+          nama_kepala_keluarga: String(form.namaKK || '').trim(),
+          status_kesehatan: form.statusSasaran === 'Ibu Hamil' ? form.statusKesehatan : '-',
+          pemeriksaan_kehamilan: form.statusSasaran === 'Ibu Hamil' ? form.pemeriksaanKehamilan : '-',
+          konsumsi_ttd: form.statusSasaran === 'Ibu Hamil' ? form.konsumsiTTD : '-',
+          status_menyusu_mpasi: form.statusSasaran !== 'Ibu Hamil' ? form.statusMenyusu : '-',
+          kondisi_rumah: form.kondisiRumah,
+          air_bersih: form.airBersih,
+          keterangan_masalah: String(form.keteranganMasalah || '').trim(),
+          kategori_intervensi: kategoriStr,
+          status_prioritas: form.statusPrioritas,
+          sudah_mbg_pmt: form.sudahMbgPmt,
+          status_verifikasi: 'Menunggu Verifikasi',
+          status_ota: 'Belum Ada OTA',
+          target_slot: calcDefaultTargetSlot(kategoriStr, form.sudahMbgPmt),
+          slot_terisi: 0,
+          input_by: user.username,
+          alamat_lengkap: String(form.alamatLengkap || '-').trim()
+        });
+        if (error) throw error;
+        return { success: true, message: `Data sasaran berhasil disimpan dengan ID Anonim: ${idAnonim}. Menunggu verifikasi PLKB.` };
+      },
+
+      async updateSasaran3B(form) {
+        const { data: cur, error: e1 } = await sb.from('data_sasaran_3b').select('slot_terisi').eq('id_sasaran_anonim', form.idAnonim).single();
+        if (e1 || !cur) return { success: false, message: 'Data sasaran tidak ditemukan untuk direvisi.' };
+
+        const kategoriStr = form.kategoriIntervensi.join(', ');
+        const upd = {
+          wilayah_kecamatan: form.kecamatan,
+          wilayah_desa_kelurahan: form.desa,
+          kode_keluarga: String(form.kodeKeluarga || '').trim().toUpperCase(),
+          nama_sasaran: String(form.namaSasaran || '').trim(),
+          tgl_lahir_sasaran: form.tglLahir,
+          usia_sasaran: form.usiaSasaran,
+          status_sasaran: form.statusSasaran,
+          nama_kepala_keluarga: String(form.namaKK || '').trim(),
+          status_kesehatan: form.statusSasaran === 'Ibu Hamil' ? form.statusKesehatan : '-',
+          pemeriksaan_kehamilan: form.statusSasaran === 'Ibu Hamil' ? form.pemeriksaanKehamilan : '-',
+          konsumsi_ttd: form.statusSasaran === 'Ibu Hamil' ? form.konsumsiTTD : '-',
+          status_menyusu_mpasi: form.statusSasaran !== 'Ibu Hamil' ? form.statusMenyusu : '-',
+          kondisi_rumah: form.kondisiRumah,
+          air_bersih: form.airBersih,
+          keterangan_masalah: String(form.keteranganMasalah || '').trim(),
+          kategori_intervensi: kategoriStr,
+          status_prioritas: form.statusPrioritas,
+          sudah_mbg_pmt: form.sudahMbgPmt,
+          alamat_lengkap: String(form.alamatLengkap || '-').trim()
+        };
+        if ((Number(cur.slot_terisi) || 0) === 0) {
+          upd.target_slot = calcDefaultTargetSlot(kategoriStr, form.sudahMbgPmt);
+        }
+        const { error } = await sb.from('data_sasaran_3b').update(upd).eq('id_sasaran_anonim', form.idAnonim);
+        if (error) throw error;
+        return { success: true, message: `Revisi data sasaran ${form.idAnonim} berhasil disimpan!` };
+      },
+
+      async saveMonitoringLog(form, user) {
+        const idLog = 'MON-' + Date.now();
+        const { error } = await sb.from('log_monitoring').insert({
+          id_log: idLog,
+          id_sasaran_anonim: form.idAnonim,
+          bulan_ke: Number(form.bulanKe) || 1,
+          jenis_intervensi: form.jenisIntervensi,
+          via_dashat: form.viaDashat,
+          bb_kg: form.bbKg || '-',
+          tb_cm: form.tbCm || '-',
+          lila_cm: form.lilaCm || '-',
+          status_tren: form.statusTren,
+          status_graduasi: form.statusGraduasi,
+          catatan: String(form.catatan || '').trim(),
+          input_by: user.username
+        });
+        if (error) throw error;
+        if (form.statusGraduasi === 'Graduasi Tuntas') {
+          await sb.from('data_sasaran_3b').update({ status_ota: 'Graduasi Tuntas' }).eq('id_sasaran_anonim', form.idAnonim);
+        }
+        return { success: true, message: 'Log monitoring bulanan berhasil dicatat.' };
+      },
+
+      async getMonitoringBySasaran(idAnonim) {
+        const { data, error } = await sb.from('log_monitoring').select('*').eq('id_sasaran_anonim', idAnonim).order('timestamp', { ascending: false });
+        if (error) throw error;
+        return (data || []).map(mapMonitoringRow);
+      },
+
+      async commitOTA(form, user) {
+        if (!user || user.role !== 'OTA') return { success: false, message: 'Akses ditolak. Khusus akun OTA.' };
+        const { data: sas, error: e1 } = await sb.from('data_sasaran_3b').select('*').eq('id_sasaran_anonim', form.idAnonim).single();
+        if (e1 || !sas) return { success: false, message: 'Sasaran tidak ditemukan.' };
+
+        const bentuk = String(form.bentukBantuan || '').trim();
+        const kebutuhanList = String(sas.kategori_intervensi || '').split(',').map(x => x.trim().toLowerCase());
+        if (!kebutuhanList.includes(bentuk.toLowerCase())) {
+          return { success: false, message: `Bentuk bantuan "${bentuk}" tidak termasuk kebutuhan prioritas sasaran ini.` };
+        }
+        if (bentuk === 'Bantuan Nutrisi' && String(sas.sudah_mbg_pmt || '').toLowerCase().startsWith('sudah')) {
+          return { success: false, message: 'Sasaran sudah menerima MBG 3B/PMT penuh.' };
+        }
+
+        const targetSlot = Number(sas.target_slot) || calcDefaultTargetSlot(sas.kategori_intervensi, sas.sudah_mbg_pmt);
+        const slotTerisi = Number(sas.slot_terisi) || 0;
+        let slotDiminta = 1, nominal = 0, skemaLabel = form.skema || '1 Paket';
+        let uraianDetail = String(form.uraianDukungan || '').trim();
+        let newSlotTerisi = slotTerisi, newStatusOTA = sas.status_ota;
+
+        if (bentuk === 'Bantuan Nutrisi') {
+          const sisaSlot = targetSlot - slotTerisi;
+          const periode = Number(form.periodeBulan) || 1;
+          if (form.skema === 'OTA Penuh') {
+            slotDiminta = sisaSlot;
+            nominal = slotDiminta * 15000 * periode;
+            uraianDetail = `OTA Penuh Nutrisi (${slotDiminta} hari/bln x ${periode} bulan @Rp15.000/hari)`;
+          } else {
+            slotDiminta = Number(form.jumlahSlot) || 1;
+            if (slotDiminta <= 0 || slotDiminta > sisaSlot) return { success: false, message: `Slot hari tidak mencukupi. Sisa: ${sisaSlot} hari.` };
+            nominal = slotDiminta * 15000;
+            uraianDetail = `Micro-OTA Nutrisi (${slotDiminta} hari makan @Rp15.000/hari)`;
+          }
+          newSlotTerisi = slotTerisi + slotDiminta;
+          newStatusOTA = newSlotTerisi >= targetSlot ? 'Sedang Diasuh' : 'Proses Micro-OTA';
+        } else if (bentuk === 'Edukasi') {
+          skemaLabel = '1 Paket Edukasi';
+          if (targetSlot === 1) { newSlotTerisi = 1; newStatusOTA = 'Sedang Diasuh'; }
+          else if (newStatusOTA === 'Belum Ada OTA') newStatusOTA = 'Proses Micro-OTA';
+        } else {
+          skemaLabel = `1 Paket (${form.bentukDukungan || 'Pembiayaan'})`;
+          nominal = form.bentukDukungan === 'Pembiayaan (Rp)' ? (Number(form.nominalInput) || 0) : 0;
+          if (targetSlot === 1) { newSlotTerisi = 1; newStatusOTA = 'Sedang Diasuh'; }
+          else if (newStatusOTA === 'Belum Ada OTA') newStatusOTA = 'Proses Micro-OTA';
+        }
+
+        await sb.from('data_sasaran_3b').update({ status_ota: newStatusOTA, slot_terisi: newSlotTerisi }).eq('id_sasaran_anonim', form.idAnonim);
+        const idMatch = 'MTC-' + Date.now();
+        const { error: e2 } = await sb.from('transaksi_matching').insert({
+          id_match: idMatch, id_sasaran_anonim: form.idAnonim, username_ota: user.username,
+          nama_ota: user.nama, kategori_mitra: user.kategoriMitra, skema_ota: skemaLabel,
+          jumlah_slot: slotDiminta, nominal_komitmen: nominal, status_komitmen: 'Menunggu Konfirmasi',
+          bentuk_bantuan: bentuk, mekanisme_penyaluran: form.mekanismePenyaluran || 'Lumbung GENTING Desa/Kelurahan (Kader DASHAT)',
+          pihak_ketiga_lembaga: String(form.pihakKetiga || '-').trim(), uraian_dukungan_periode: uraianDetail || '-'
+        });
+        if (e2) throw e2;
+        return { success: true, message: `Komitmen ${bentuk} berhasil dicatat (${idMatch}). Terima kasih telah menjadi Orang Tua Asuh!` };
+      },
+
+      async getMyAnakAsuh(usernameOTA) {
+        const [{ data: matches }, catalog] = await Promise.all([
+          sb.from('transaksi_matching').select('*').eq('username_ota', usernameOTA).order('tgl_komitmen', { ascending: false }),
+          SB_API.getSasaranForOTA()
+        ]);
+        const catMap = {};
+        catalog.forEach(c => catMap[c.idAnonim] = c);
+        return (matches || []).map(m => ({
+          idMatch: m.id_match, idAnonim: m.id_sasaran_anonim, skema: m.skema_ota,
+          jumlahSlot: m.jumlah_slot, nominal: m.nominal_komitmen, statusKomitmen: m.status_komitmen,
+          tglKomitmen: formatTs(m.tgl_komitmen), bentukBantuan: m.bentuk_bantuan || 'Bantuan Nutrisi',
+          mekanisme: m.mekanisme_penyaluran || '-', pihakKetiga: m.pihak_ketiga_lembaga || '-',
+          uraian: m.uraian_dukungan_periode || '-',
+          profil: catMap[m.id_sasaran_anonim] || { kecamatan: '-', desa: '-', statusSasaran: '-', kategoriIntervensi: '-', statusOTA: '-' }
+        }));
+      },
+
+      async getOtaListForReport() {
+        const [{ data: users }, { data: matches }] = await Promise.all([
+          sb.from('users').select('*').eq('role', 'OTA'),
+          sb.from('transaksi_matching').select('*')
+        ]);
+        const otaMap = {};
+        (users || []).forEach(u => {
+          otaMap[u.username] = { username: u.username, nama: u.nama_lengkap, kategoriMitra: u.kategori_mitra, noWa: u.no_wa, sasaranSet: new Set(), totalSlot: 0, totalNominal: 0 };
+        });
+        (matches || []).forEach(m => {
+          if (!otaMap[m.username_ota]) {
+            otaMap[m.username_ota] = { username: m.username_ota, nama: m.nama_ota, kategoriMitra: m.kategori_mitra, noWa: '-', sasaranSet: new Set(), totalSlot: 0, totalNominal: 0 };
+          }
+          otaMap[m.username_ota].sasaranSet.add(m.id_sasaran_anonim);
+          otaMap[m.username_ota].totalSlot += Number(m.jumlah_slot) || 0;
+          otaMap[m.username_ota].totalNominal += Number(m.nominal_komitmen) || 0;
+        });
+        return Object.values(otaMap).map(o => ({
+          username: o.username, nama: o.nama, kategoriMitra: o.kategoriMitra, noWa: o.noWa,
+          totalSasaran: o.sasaranSet.size, totalSlot: o.totalSlot, totalNominal: o.totalNominal
+        })).sort((a, b) => b.totalSasaran - a.totalSasaran);
+      },
+
+      async getConsolidatedOtaReport(usernameOTA) {
+        const [{ data: user }, { data: matches }, { data: mons }, catalog] = await Promise.all([
+          sb.from('users').select('*').eq('username', usernameOTA).maybeSingle(),
+          sb.from('transaksi_matching').select('*').eq('username_ota', usernameOTA),
+          sb.from('log_monitoring').select('*').order('bulan_ke', { ascending: true }),
+          SB_API.getSasaranForOTA()
+        ]);
+        const otaProfile = user
+          ? { username: user.username, nama: user.nama_lengkap, kategoriMitra: user.kategori_mitra, noWa: user.no_wa }
+          : { username: usernameOTA, nama: usernameOTA, kategoriMitra: '-', noWa: '-' };
+
+        const catMap = {};
+        catalog.forEach(c => catMap[c.idAnonim] = c);
+        const monMap = {};
+        (mons || []).forEach(r => {
+          if (!monMap[r.id_sasaran_anonim]) monMap[r.id_sasaran_anonim] = [];
+          monMap[r.id_sasaran_anonim].push(mapMonitoringRow(r));
+        });
+
+        const grouped = {};
+        (matches || []).forEach(m => {
+          const idAnon = m.id_sasaran_anonim;
+          if (!grouped[idAnon]) {
+            grouped[idAnon] = {
+              idAnonim: idAnon, skemaList: [], bentukList: [], mekanismeList: [],
+              jumlahSlot: 0, nominal: 0, statusKomitmen: m.status_komitmen, tglMulai: formatTs(m.tgl_komitmen),
+              profil: catMap[idAnon] || { kecamatan: '-', desa: '-', usia: '-', statusSasaran: '-', kategoriIntervensi: '-', prioritasKode: '-', statusOTA: '-', masalah: '-' },
+              logs: monMap[idAnon] || []
+            };
+          }
+          if (!grouped[idAnon].skemaList.includes(m.skema_ota)) grouped[idAnon].skemaList.push(m.skema_ota);
+          const bentuk = m.bentuk_bantuan || 'Bantuan Nutrisi';
+          if (!grouped[idAnon].bentukList.includes(bentuk)) grouped[idAnon].bentukList.push(bentuk);
+          if (m.mekanisme_penyaluran && !grouped[idAnon].mekanismeList.includes(m.mekanisme_penyaluran)) grouped[idAnon].mekanismeList.push(m.mekanisme_penyaluran);
+          grouped[idAnon].jumlahSlot += Number(m.jumlah_slot) || 0;
+          grouped[idAnon].nominal += Number(m.nominal_komitmen) || 0;
+          if (m.status_komitmen === 'Aktif') grouped[idAnon].statusKomitmen = 'Aktif';
+        });
+
+        const items = Object.values(grouped);
+        let totalSlot = 0, totalNominal = 0, jumlahGraduasi = 0, jumlahBerjalan = 0;
+        items.forEach(it => {
+          totalSlot += it.jumlahSlot;
+          totalNominal += it.nominal;
+          if (it.profil.statusOTA === 'Graduasi Tuntas') jumlahGraduasi++;
+          else jumlahBerjalan++;
+        });
+
+        return {
+          success: true, ota: otaProfile,
+          summary: { totalSasaran: items.length, totalSlot, totalNominal, jumlahGraduasi, jumlahBerjalan, tglCetak: formatWita() },
+          items
+        };
+      },
+
+      async getAdminDashboardData() {
+        const [{ data: sasRows }, { data: matchRows }, { data: monRows }] = await Promise.all([
+          sb.from('data_sasaran_3b').select('*').order('timestamp', { ascending: false }),
+          sb.from('transaksi_matching').select('*').order('tgl_komitmen', { ascending: false }),
+          sb.from('log_monitoring').select('*').eq('status_tren', 'T (Tidak Naik)').order('timestamp', { ascending: false })
+        ]);
+        let stats = { total: 0, p1: 0, p2: 0, p3: 0, pendingVerif: 0, sudahOTA: 0, graduasi: 0 };
+        const pendingList = [];
+        (sasRows || []).forEach(r => {
+          stats.total++;
+          const p = String(r.status_prioritas || '').substring(0, 2);
+          if (p === 'P1') stats.p1++; else if (p === 'P2') stats.p2++; else if (p === 'P3') stats.p3++;
+          if (r.status_verifikasi === 'Menunggu Verifikasi') {
+            stats.pendingVerif++;
+            pendingList.push({
+              idAnonim: r.id_sasaran_anonim, kecamatan: r.wilayah_kecamatan, desa: r.wilayah_desa_kelurahan,
+              namaSasaran: r.nama_sasaran, statusSasaran: r.status_sasaran, prioritas: p,
+              intervensi: r.kategori_intervensi, inputBy: r.input_by, alamat: r.alamat_lengkap || '-'
+            });
+          }
+          if (r.status_ota === 'Sedang Diasuh' || r.status_ota === 'Proses Micro-OTA') stats.sudahOTA++;
+          if (r.status_ota === 'Graduasi Tuntas') stats.graduasi++;
+        });
+
+        const komitmenList = (matchRows || []).map(m => ({
+          idMatch: m.id_match, idAnonim: m.id_sasaran_anonim, namaOTA: m.nama_ota, kategori: m.kategori_mitra,
+          skema: m.skema_ota, slot: m.jumlah_slot, nominal: m.nominal_komitmen, status: m.status_komitmen,
+          tgl: formatTs(m.tgl_komitmen), bentukBantuan: m.bentuk_bantuan || 'Bantuan Nutrisi',
+          mekanisme: m.mekanisme_penyaluran || '-', uraian: m.uraian_dukungan_periode || '-'
+        }));
+
+        const earlyWarnings = (monRows || []).map(w => ({
+          idAnonim: w.id_sasaran_anonim, bulanKe: w.bulan_ke, bb: w.bb_kg,
+          catatan: w.catatan, petugas: w.input_by, tgl: formatTs(w.timestamp)
+        }));
+
+        return { stats, pendingList, komitmenList, earlyWarnings };
+      },
+
+      async verifySasaran(idAnonim) {
+        const { data: r } = await sb.from('data_sasaran_3b').select('kategori_intervensi, sudah_mbg_pmt').eq('id_sasaran_anonim', idAnonim).single();
+        if (!r) return { success: false, message: 'ID Sasaran tidak ditemukan.' };
+        const targetSlot = calcDefaultTargetSlot(r.kategori_intervensi, r.sudah_mbg_pmt);
+        const { error } = await sb.from('data_sasaran_3b').update({ status_verifikasi: 'Terverifikasi', target_slot: targetSlot }).eq('id_sasaran_anonim', idAnonim);
+        if (error) throw error;
+        return { success: true, message: `Sasaran ${idAnonim} telah diverifikasi (${targetSlot === 30 ? '30 Slot Hari' : '1 Paket'}) dan tayang di Portal OTA.` };
+      },
+
+      async confirmKomitmenOTA(idMatch) {
+        const { error } = await sb.from('transaksi_matching').update({ status_komitmen: 'Aktif' }).eq('id_match', idMatch);
+        if (error) throw error;
+        return { success: true, message: `Komitmen ${idMatch} dikonfirmasi Aktif.` };
+      }
+    };
+
+    // ==================== SHIM google.script.run ====================
+    function createGasRunner(successCb, failureCb) {
+      return new Proxy({}, {
+        get(_, prop) {
+          if (prop === 'withSuccessHandler') return (cb) => createGasRunner(cb, failureCb);
+          if (prop === 'withFailureHandler') return (cb) => createGasRunner(successCb, cb);
+          return (...args) => {
+            if (typeof SB_API[prop] !== 'function') {
+              const err = new Error('Fungsi belum tersedia di Supabase Bridge: ' + String(prop));
+              if (failureCb) failureCb(err); else console.error(err);
+              return;
+            }
+            Promise.resolve(SB_API[prop](...args))
+              .then(res => { if (successCb) successCb(res); })
+              .catch(err => {
+                console.error('Supabase Error:', err);
+                if (failureCb) failureCb(err);
+                else if (typeof showToast === 'function') { hideLoader(); showToast('Error: ' + (err.message || err), 'error'); }
+              });
+          };
+        }
+      });
+    }
+    window.google = { script: { run: createGasRunner(null, null) } };
+  </script>
+  <script>
+    let STATE = {
+      user: null,
+      master: { referensi: {}, wilayah: {} },
+      catalog: [],
+      otaPage: 1,
+      otaPerPage: 12,
+      executive: null,
+      plkbList: [],
+      plkbPage: 1,
+      plkbPerPage: 20,
+      adminOtaList: [],
+      currentReport: null
+    };
+
+    let CHARTS = {
+      kecamatan: null,
+      needs: null,
+      pentahelix: null
+    };
+
+    window.onload = function() {
+      initApp();
+    };
+
+    function showLoader(text = 'Memuat data...') {
+      document.getElementById('loaderText').innerText = text;
+      document.getElementById('globalLoader').classList.remove('hidden');
+    }
+    function hideLoader() {
+      document.getElementById('globalLoader').classList.add('hidden');
+    }
+    function showToast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      el.innerText = msg;
+      el.className = `fixed bottom-5 right-5 z-50 px-5 py-3.5 rounded-xl shadow-lg text-white text-sm font-medium no-print ${type === 'error' ? 'bg-rose-600' : 'bg-teal-700'}`;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 4000);
+    }
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function openRegOtaModal() {
+      document.getElementById('regDuplicateAlert').classList.add('hidden');
+      document.getElementById('formRegOTA').reset();
+      openModal('modalRegOTA');
+    }
+
+    function initApp() {
+      showLoader('Menyiapkan aplikasi...');
+      google.script.run.withSuccessHandler(res => {
+        STATE.master = res.master || { referensi: {}, wilayah: {} };
+        STATE.catalog = res.catalog || [];
+        STATE.executive = res.executive || null;
+        populateDropdowns();
+        renderOtaCatalog(true);
+        hideLoader();
+      }).withFailureHandler(err => {
+        hideLoader();
+        showToast('Gagal memuat data: ' + (err.message || err), 'error');
+      }).getInitialData();
+    }
+
+    function populateDropdowns() {
+      const ref = STATE.master.referensi || {};
+      const wil = STATE.master.wilayah || {};
+
+      const kecList = Object.keys(wil).sort();
+      fillSelect('filterOtaKec', kecList, 'Semua Kecamatan');
+      fillSelect('filterOtaDesa', [], 'Semua Desa/Kelurahan');
+      fillSelect('filterOtaIntervensi', ref.KATEGORI_INTERVENSI || [], 'Semua Kategori Intervensi');
+
+      fillSelect('inKecamatan', kecList, '-- Pilih Kecamatan --');
+      fillSelect('inStatusSasaran', ref.STATUS_SASARAN || []);
+      fillSelect('inStatusKesehatan', ref.STATUS_KESEHATAN_BUMIL || []);
+      fillSelect('inStatusMenyusu', ref.STATUS_MENYUSU_MPASI || []);
+      fillSelect('inKondisiRumah', ref.KONDISI_RUMAH || []);
+      fillSelect('inAirBersih', ref.AIR_BERSIH || []);
+      fillSelect('inStatusPrioritas', ref.STATUS_PRIORITAS || []);
+
+      const cbBox = document.getElementById('inIntervensiCheckboxes');
+      cbBox.innerHTML = '';
+      (ref.KATEGORI_INTERVENSI || []).forEach(item => {
+        cbBox.innerHTML += `
+          <label class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-lg text-xs cursor-pointer hover:bg-teal-50">
+            <input type="checkbox" name="chkIntervensi" value="${item}" class="rounded text-teal-700">
+            <span>${item}</span>
+          </label>`;
+      });
+
+      toggleDynamicFields();
+    }
+
+    function fillSelect(id, arr, placeholder = null) {
+      const el = document.getElementById(id);
+      el.innerHTML = placeholder ? `<option value="">${placeholder}</option>` : '';
+      arr.forEach(v => el.innerHTML += `<option value="${v}">${v}</option>`);
+    }
+
+    function setSelectCaseInsensitive(el, val) {
+      if (!val) return;
+      const target = val.trim().toLowerCase();
+      for (let i = 0; i < el.options.length; i++) {
+        if (el.options[i].value.trim().toLowerCase() === target) {
+          el.selectedIndex = i;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function updatePublicTabs(activeView) {
+      const btnCat = document.getElementById('pubTabCatalog');
+      const btnExec = document.getElementById('pubTabExec');
+      if (!btnCat || !btnExec) return;
+
+      if (activeView === 'exec_dashboard') {
+        btnExec.className = 'px-3.5 py-1.5 rounded-lg bg-amber-400 text-slate-900 font-bold shadow-xs transition';
+        btnCat.className = 'px-3.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white font-semibold transition';
+      } else {
+        btnCat.className = 'px-3.5 py-1.5 rounded-lg bg-white text-teal-900 font-bold shadow-xs transition';
+        btnExec.className = 'px-3.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white font-semibold transition';
+      }
+    }
+
+    function switchView(viewId, isEditMode = false) {
+      document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+      document.getElementById('view_' + viewId).classList.remove('hidden');
+      updatePublicTabs(viewId);
+
+      if (viewId === 'exec_dashboard') renderExecutiveDashboard();
+      if (viewId === 'ota_catalog') renderOtaCatalog(false);
+      if (viewId === 'plkb_input' && !isEditMode) resetFormToCreateMode();
+      if (viewId === 'ota_myasuh') loadMyAnakAsuh();
+      if (viewId === 'plkb_list') loadPlkbList();
+      if (viewId === 'admin_dash') loadAdminDashboard();
+      if (viewId === 'rapor_ota') initRaporOtaView();
+      if (viewId === 'admin_ota_list') loadAdminOtaList();
+    }
+
+    // ==================== DASHBOARD EKSEKUTIF (CHART.JS) ====================
+    function refreshExecutiveData() {
+      showLoader('Memperbarui data eksekutif...');
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        STATE.executive = res;
+        renderExecutiveDashboard();
+        showToast('Data Dashboard Eksekutif berhasil diperbarui.');
+      }).getExecutiveSummaryData(true);
+    }
+
+    function renderExecutiveDashboard() {
+      const ex = STATE.executive;
+      if (!ex) return;
+      const k = ex.kpi;
+
+      document.getElementById('execLastUpdate').innerText = 'Diperbarui: ' + ex.tglUpdate;
+      document.getElementById('execKpiTotal').innerText = k.totalVerified;
+      document.getElementById('execKpiPrio').innerText = `P1: ${k.p1} • P2: ${k.p2} • P3: ${k.p3}`;
+      document.getElementById('execKpiCakupanPct').innerText = k.matchedPct + '%';
+      document.getElementById('execKpiCakupanSub').innerText = `${k.matchedCount} dari ${k.totalVerified} sasaran`;
+      document.getElementById('execKpiRupiah').innerText = 'Rp ' + Number(k.totalGotongRoyongRp).toLocaleString('id-ID');
+      document.getElementById('execKpiTransaksi').innerText = `${k.totalTransaksi} komitmen OTA`;
+      document.getElementById('execKpiGradPct').innerText = k.graduasiPct + '%';
+      document.getElementById('execKpiGradSub').innerText = `${k.graduasiCount} sasaran lulus`;
+      document.getElementById('execKpiEw').innerText = k.earlyWarningCount;
+
+      const kecLabels = ex.kecamatanList.map(x => x.kec);
+      const dataGrad = ex.kecamatanList.map(x => x.graduasi);
+      const dataDiasuh = ex.kecamatanList.map(x => x.diasuh);
+      const dataBelum = ex.kecamatanList.map(x => x.belum);
+
+      if (CHARTS.kecamatan) CHARTS.kecamatan.destroy();
+      CHARTS.kecamatan = new Chart(document.getElementById('chartKecamatan'), {
+        type: 'bar',
+        data: {
+          labels: kecLabels.length ? kecLabels : ['Belum ada data'],
+          datasets: [
+            { label: 'Graduasi Tuntas', data: dataGrad, backgroundColor: '#10b981', borderRadius: 4 },
+            { label: 'Sedang Diasuh OTA', data: dataDiasuh, backgroundColor: '#0284c7', borderRadius: 4 },
+            { label: 'Belum Ada OTA', data: dataBelum, backgroundColor: '#e11d48', borderRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+          scales: {
+            x: { stacked: true, ticks: { font: { size: 11 } } },
+            y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } }
+          }
+        }
+      });
+
+      const needLabels = Object.keys(ex.needsMap);
+      const needVals = Object.values(ex.needsMap);
+      if (CHARTS.needs) CHARTS.needs.destroy();
+      CHARTS.needs = new Chart(document.getElementById('chartNeeds'), {
+        type: 'bar',
+        data: {
+          labels: needLabels,
+          datasets: [{
+            label: 'Jumlah Sasaran Membutuhkan',
+            data: needVals,
+            backgroundColor: ['#0f766e', '#0ea5e9', '#06b6d4', '#f59e0b', '#8b5cf6', '#ec4899'],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } }, y: { ticks: { font: { size: 11 } } } }
+        }
+      });
+
+      const pentaLabels = Object.keys(ex.pentahelixMap);
+      const pentaVals = pentaLabels.map(l => ex.pentahelixMap[l].count);
+      if (CHARTS.pentahelix) CHARTS.pentahelix.destroy();
+      CHARTS.pentahelix = new Chart(document.getElementById('chartPentahelix'), {
+        type: 'doughnut',
+        data: {
+          labels: pentaLabels.length ? pentaLabels : ['Belum ada komitmen'],
+          datasets: [{
+            data: pentaVals.length ? pentaVals : [1],
+            backgroundColor: pentaVals.length ? ['#0f766e', '#f59e0b', '#0284c7', '#10b981', '#8b5cf6', '#64748b'] : ['#e2e8f0'],
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }
+        }
+      });
+
+      const mekEntries = Object.entries(ex.mekanismeMap);
+      const totalMek = mekEntries.reduce((acc, cur) => acc + cur[1], 0) || 1;
+      const mekColors = ['bg-teal-600', 'bg-amber-500', 'bg-sky-600'];
+      document.getElementById('execMekanismeGrid').innerHTML = mekEntries.map(([nama, val], i) => {
+        const pct = Math.round((val / totalMek) * 100);
+        return `
+          <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/70">
+            <div class="text-xs font-bold text-slate-700">${nama}</div>
+            <div class="flex items-end justify-between mt-2 mb-1.5">
+              <span class="text-2xl font-extrabold text-slate-900">${val}</span>
+              <span class="text-xs font-bold text-teal-700">${k.totalTransaksi > 0 ? pct : 0}%</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2">
+              <div class="${mekColors[i % 3]} h-2 rounded-full" style="width:${k.totalTransaksi > 0 ? pct : 0}%"></div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ==================== AUTH & REGISTRASI ANTI-DUPLIKASI ====================
+    function handleLogin(e) {
+      e.preventDefault();
+      showLoader('Memverifikasi akun...');
+      const u = document.getElementById('loginUser').value;
+      const p = document.getElementById('loginPass').value;
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        if (!res.success) return showToast(res.message, 'error');
+        STATE.user = res.user;
+        closeModal('modalLogin');
+        setupRoleUI();
+        renderOtaCatalog(false);
+        showToast(`Selamat datang, ${STATE.user.nama}!`);
+      }).loginUser(u, p);
+    }
+
+    function handleRegOTA(e) {
+      e.preventDefault();
+      document.getElementById('regDuplicateAlert').classList.add('hidden');
+      showLoader('Mendaftarkan akun OTA...');
+      const payload = {
+        nama: document.getElementById('regNama').value,
+        kategoriMitra: document.getElementById('regKategori').value,
+        noWa: document.getElementById('regWa').value,
+        username: document.getElementById('regUsername').value,
+        password: document.getElementById('regPassword').value
+      };
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        if (!res.success) {
+          if (res.duplicateWa) {
+            const alertBox = document.getElementById('regDuplicateAlert');
+            document.getElementById('regDupText').innerHTML = `Nomor WhatsApp ini sudah terdaftar dengan username: <strong class="font-mono bg-amber-200/70 px-1.5 py-0.5 rounded text-slate-900">${res.existingUsername}</strong>. Silakan langsung login, atau klik tombol di bawah jika lupa password.`;
+
+            document.getElementById('btnDupGoLogin').onclick = function() {
+              closeModal('modalRegOTA');
+              document.getElementById('loginUser').value = res.existingUsername;
+              document.getElementById('loginPass').value = '';
+              openModal('modalLogin');
+            };
+
+            const btnWa = document.getElementById('btnDupWaAdmin');
+            if (res.adminWa) {
+              const waMsg = `Halo Admin BALE ASUH LOTIM, saya lupa password akun Orang Tua Asuh (OTA) dengan username: ${res.existingUsername}. Mohon bantuannya untuk reset password. Terima kasih.`;
+              btnWa.href = `https://wa.me/${res.adminWa}?text=${encodeURIComponent(waMsg)}`;
+              btnWa.classList.remove('hidden');
+            } else {
+              btnWa.classList.add('hidden');
+            }
+
+            alertBox.classList.remove('hidden');
+            return;
+          }
+          return showToast(res.message, 'error');
+        }
+
+        closeModal('modalRegOTA');
+        document.getElementById('formRegOTA').reset();
+        showToast(res.message);
+        if (STATE.user && STATE.user.role === 'ADMIN_OPD') {
+          loadAdminOtaList();
+        } else {
+          document.getElementById('loginUser').value = payload.username.trim().toLowerCase();
+          openModal('modalLogin');
+        }
+      }).registerOTA(payload);
+    }
+
+    function setupRoleUI() {
+      const u = STATE.user;
+      document.getElementById('navAuthArea').classList.add('hidden');
+      document.getElementById('publicNavBar').classList.add('hidden');
+      document.getElementById('roleNavBar').classList.remove('hidden');
+      document.getElementById('userBadge').innerHTML = `<i class="fa-solid fa-user-circle mr-1"></i> ${u.nama} (${u.role})`;
+
+      const menu = document.getElementById('roleMenuLinks');
+      menu.innerHTML = '';
+
+      if (u.role === 'OTA') {
+        menu.innerHTML = `
+          <button onclick="switchView('ota_catalog')" class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 font-medium">Etalase Sasaran 3B</button>
+          <button onclick="switchView('ota_myasuh')" class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 font-medium">Anak Asuh Saya</button>
+          <button onclick="switchView('rapor_ota')" class="px-3 py-1.5 rounded-lg bg-amber-400 text-slate-900 font-bold"><i class="fa-solid fa-file-pdf mr-1"></i> Rapor Dampak Saya</button>
+          <button onclick="switchView('exec_dashboard')" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-teal-200"><i class="fa-solid fa-chart-pie mr-1"></i> Dashboard</button>`;
+        switchView('ota_catalog');
+      } else if (u.role === 'PIC_DESA') {
+        menu.innerHTML = `
+          <button onclick="switchView('plkb_input')" class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 font-medium">+ Input Sasaran 3B</button>
+          <button onclick="switchView('plkb_list')" class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 font-medium">Daftar Sasaran & Monitoring</button>
+          <button onclick="switchView('exec_dashboard')" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-teal-200"><i class="fa-solid fa-chart-pie mr-1"></i> Dashboard</button>`;
+        switchView('plkb_input');
+      } else if (u.role === 'PLKB') {
+        menu.innerHTML = `
+          <button onclick="switchView('plkb_list')" class="px-3 py-1.5 rounded-lg bg-amber-400 text-slate-900 font-bold"><i class="fa-solid fa-clipboard-check mr-1"></i> Daftar Sasaran & Verifikasi</button>
+          <button onclick="switchView('plkb_input')" class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 font-medium">+ Input Sasaran 3B</button>
+          <button onclick="switchView('exec_dashboard')" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-teal-200"><i class="fa-solid fa-chart-pie mr-1"></i> Dashboard</button>`;
+        switchView('plkb_list');
+      } else if (u.role === 'ADMIN_OPD') {
+        menu.innerHTML = `
+          <button onclick="switchView('admin_dash')" class="px-3 py-1.5 rounded-lg bg-amber-400 text-slate-900 font-bold">Command Center</button>
+          <button onclick="switchView('exec_dashboard')" class="px-3 py-1.5 rounded-lg bg-sky-500 text-white font-semibold"><i class="fa-solid fa-chart-pie mr-1"></i> Dashboard Eksekutif</button>
+          <button onclick="switchView('admin_ota_list')" class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 font-medium"><i class="fa-solid fa-users mr-1"></i> Daftar OTA</button>
+          <button onclick="switchView('rapor_ota')" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-white font-semibold"><i class="fa-solid fa-file-lines mr-1"></i> Rapor OTA</button>
+          <button onclick="switchView('plkb_input')" class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 font-medium">+ Input</button>
+          <button onclick="switchView('plkb_list')" class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 font-medium">Data Sasaran</button>`;
+        switchView('admin_dash');
+      }
+    }
+
+    function logout() {
+      STATE.user = null;
+      STATE.currentReport = null;
+      document.getElementById('navAuthArea').classList.remove('hidden');
+      document.getElementById('publicNavBar').classList.remove('hidden');
+      document.getElementById('roleNavBar').classList.add('hidden');
+      switchView('ota_catalog');
+      showToast('Anda telah keluar.');
+    }
+
+    // ==================== MANAJEMEN DAFTAR OTA (ADMIN_OPD) ====================
+    function loadAdminOtaList() {
+      showLoader('Memuat daftar OTA...');
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        if (!res.success) return showToast(res.message, 'error');
+        STATE.adminOtaList = res.list;
+        renderAdminOtaTable();
+      }).getOtaManagementList(STATE.user);
+    }
+
+    function renderAdminOtaTable() {
+      const q = (document.getElementById('searchOtaInput').value || '').trim().toLowerCase();
+      const fStatus = document.getElementById('filterOtaAktif').value;
+
+      const filtered = STATE.adminOtaList.filter(o => {
+        if (fStatus && o.statusAktif !== fStatus) return false;
+        if (q && !(o.nama.toLowerCase().includes(q) || o.username.toLowerCase().includes(q) || o.kategoriMitra.toLowerCase().includes(q))) {
+          return false;
+        }
+        return true;
+      });
+
+      const tbody = document.getElementById('adminOtaTableBody');
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Tidak ada data Orang Tua Asuh yang sesuai.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(o => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-3 text-center">
+            <button onclick="openEditOtaModal('${o.username}')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-2.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition">
+              <i class="fa-solid fa-pen-to-square mr-1"></i>Edit
+            </button>
+          </td>
+          <td class="p-3">
+            <div class="font-bold text-slate-800">${o.nama}</div>
+            <div class="text-xs font-mono text-slate-500">@${o.username}</div>
+          </td>
+          <td class="p-3 text-xs font-medium text-slate-700">${o.kategoriMitra}</td>
+          <td class="p-3 text-xs text-slate-600">${o.noWa || '-'}</td>
+          <td class="p-3 text-xs">
+            <div class="font-bold text-teal-800">${o.totalSasaran} Sasaran (${o.totalSlot} Slot/Paket)</div>
+            <div class="text-slate-500">Rp ${Number(o.totalNominal).toLocaleString('id-ID')}</div>
+          </td>
+          <td class="p-3 text-center">
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${o.statusAktif === 'Aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-700'}">
+              ${o.statusAktif}
+            </span>
+          </td>
+        </tr>`).join('');
+    }
+
+    function openEditOtaModal(username) {
+      const ota = STATE.adminOtaList.find(x => x.username === username);
+      if (!ota) return showToast('Data OTA tidak ditemukan.', 'error');
+      document.getElementById('editOtaUsername').value = ota.username;
+      document.getElementById('editOtaNama').value = ota.nama;
+      setSelectCaseInsensitive(document.getElementById('editOtaKategori'), ota.kategoriMitra);
+      document.getElementById('editOtaWa').value = ota.noWa;
+      document.getElementById('editOtaPassword').value = ota.password;
+      document.getElementById('editOtaStatus').value = ota.statusAktif;
+      openModal('modalEditOTA');
+    }
+
+    function submitEditOTA(e) {
+      e.preventDefault();
+      showLoader('Menyimpan perubahan data OTA...');
+      const payload = {
+        username: document.getElementById('editOtaUsername').value,
+        nama: document.getElementById('editOtaNama').value,
+        kategoriMitra: document.getElementById('editOtaKategori').value,
+        noWa: document.getElementById('editOtaWa').value,
+        password: document.getElementById('editOtaPassword').value,
+        statusAktif: document.getElementById('editOtaStatus').value
+      };
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        if (!res.success) return showToast(res.message, 'error');
+        closeModal('modalEditOTA');
+        showToast(res.message);
+        loadAdminOtaList();
+      }).updateOtaAccount(payload, STATE.user);
+    }
+
+    // ==================== PORTAL OTA (ETALASE + PAGINATION 12/HAL) ====================
+    function onFilterOtaKecChange() {
+      const kec = document.getElementById('filterOtaKec').value;
+      const desaList = kec ? (STATE.master.wilayah[kec] || []).slice().sort() : [];
+      fillSelect('filterOtaDesa', desaList, 'Semua Desa/Kelurahan');
+      renderOtaCatalog(true);
+    }
+
+    function changeOtaPage(delta) {
+      STATE.otaPage += delta;
+      renderOtaCatalog(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderOtaCatalog(resetPage = false) {
+      if (resetPage) STATE.otaPage = 1;
+
+      const fKec = document.getElementById('filterOtaKec').value;
+      const fDesa = document.getElementById('filterOtaDesa').value;
+      const fPrio = document.getElementById('filterOtaPrioritas').value;
+      const fInt = document.getElementById('filterOtaIntervensi').value;
+      const fStat = document.getElementById('filterOtaStatus').value;
+
+      const filtered = STATE.catalog.filter(item => {
+        if (fKec && item.kecamatan.toLowerCase() !== fKec.toLowerCase()) return false;
+        if (fDesa && item.desa.toLowerCase() !== fDesa.toLowerCase()) return false;
+        if (fPrio && item.prioritasKode !== fPrio) return false;
+        if (fInt && !item.kategoriIntervensi.includes(fInt)) return false;
+        if (fStat && item.statusOTA !== fStat) return false;
+        return true;
+      });
+
+      document.getElementById('statCatalogTotal').innerText = filtered.length;
+      document.getElementById('statCatalogP1').innerText = filtered.filter(x => x.prioritasKode === 'P1').length;
+
+      const grid = document.getElementById('otaCatalogGrid');
+      const pagBox = document.getElementById('otaPagination');
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 bg-white rounded-2xl border text-slate-400">Tidak ada sasaran prioritas yang sesuai filter.</div>`;
+        pagBox.innerHTML = '';
+        return;
+      }
+
+      const totalPages = Math.ceil(filtered.length / STATE.otaPerPage);
+      if (STATE.otaPage < 1) STATE.otaPage = 1;
+      if (STATE.otaPage > totalPages) STATE.otaPage = totalPages;
+
+      const startIdx = (STATE.otaPage - 1) * STATE.otaPerPage;
+      const pageItems = filtered.slice(startIdx, startIdx + STATE.otaPerPage);
+      const isNonOtaUser = STATE.user && STATE.user.role !== 'OTA';
+
+      grid.innerHTML = pageItems.map(c => {
+        const pct = Math.min(100, Math.round((c.slotTerisi / c.targetSlot) * 100));
+        const sisa = c.targetSlot - c.slotTerisi;
+        const unitLabel = c.targetSlot === 1 ? 'Paket' : 'Slot Hari';
+        const prioColor = c.prioritasKode === 'P1' ? 'bg-rose-600 text-white' : (c.prioritasKode === 'P2' ? 'bg-amber-500 text-white' : 'bg-sky-600 text-white');
+        const isGraduasi = c.statusOTA === 'Graduasi Tuntas';
+        const isFull = sisa <= 0 || isGraduasi;
+
+        let actionBtnHtml = '';
+        if (isFull) {
+          actionBtnHtml = `<button disabled class="w-full ${isGraduasi ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'} py-2 rounded-lg text-xs font-semibold cursor-not-allowed">
+            ${isGraduasi ? '<i class="fa-solid fa-award mr-1"></i> Graduasi Tuntas (Lulus)' : 'Sudah Terpenuhi / Diasuh'}
+          </button>`;
+        } else if (isNonOtaUser) {
+          actionBtnHtml = `<button disabled class="w-full bg-slate-100 text-slate-500 border border-slate-200 py-2 rounded-lg text-xs font-semibold cursor-not-allowed">
+            <i class="fa-solid fa-eye mr-1"></i> Mode Pratinjau (Khusus Akun OTA)
+          </button>`;
+        } else {
+          actionBtnHtml = `<button onclick="openCommitModal('${c.idAnonim}')" class="w-full bg-teal-700 hover:bg-teal-800 text-white py-2 rounded-lg text-xs font-semibold shadow-xs transition">
+            <i class="fa-solid fa-hand-holding-heart mr-1"></i> Pilih Sebagai Anak Asuh (Sisa ${sisa} ${unitLabel})
+          </button>`;
+        }
+
+        return `
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col overflow-hidden">
+          <div class="p-4 border-b bg-slate-50/70 flex justify-between items-start">
+            <div>
+              <span class="text-xs font-mono font-bold text-teal-700">${c.idAnonim}</span>
+              <h3 class="font-bold text-slate-800 text-base">${c.statusSasaran} (${c.usia})</h3>
+              <p class="text-xs text-slate-500"><i class="fa-solid fa-location-dot mr-1 text-teal-600"></i>${c.desa}, Kec. ${c.kecamatan}</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${prioColor}">${c.prioritasKode}</span>
+          </div>
+          <div class="p-4 flex-grow space-y-2.5 text-xs">
+            <div class="flex flex-wrap gap-1.5">
+              ${c.kategoriIntervensi.split(',').map(k => `<span class="bg-teal-50 text-teal-800 border border-teal-200 px-2 py-0.5 rounded-md font-medium">${k.trim()}</span>`).join('')}
+            </div>
+            <p class="text-slate-600 leading-relaxed">${c.masalah}</p>
+            <div class="grid grid-cols-2 gap-2 pt-1 text-[11px] text-slate-500">
+              <div><i class="fa-solid fa-house mr-1"></i>Rumah: <strong>${c.kondisiRumah}</strong></div>
+              <div><i class="fa-solid fa-droplet mr-1"></i>Air Bersih: <strong>${c.airBersih}</strong></div>
+            </div>
+          </div>
+          <div class="p-4 bg-slate-50 border-t">
+            <div class="flex justify-between text-xs mb-1">
+              <span class="font-semibold ${isGraduasi ? 'text-emerald-700' : 'text-slate-700'}">${c.statusOTA}</span>
+              <span class="text-teal-700 font-bold">${c.slotTerisi}/${c.targetSlot} ${unitLabel}</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2 mb-3">
+              <div class="${isGraduasi ? 'bg-emerald-500' : 'bg-teal-600'} h-2 rounded-full" style="width:${isGraduasi ? 100 : pct}%"></div>
+            </div>
+            ${actionBtnHtml}
+          </div>
+        </div>`;
+      }).join('');
+
+      if (totalPages > 1) {
+        pagBox.innerHTML = `
+          <button onclick="changeOtaPage(-1)" ${STATE.otaPage <= 1 ? 'disabled' : ''} class="px-3.5 py-2 rounded-lg text-xs font-semibold border ${STATE.otaPage <= 1 ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white hover:bg-teal-50 text-teal-800 border-teal-200'}">
+            <i class="fa-solid fa-chevron-left mr-1"></i>Sebelumnya
+          </button>
+          <span class="text-xs font-semibold text-slate-600">Halaman ${STATE.otaPage} dari ${totalPages} (${filtered.length} sasaran)</span>
+          <button onclick="changeOtaPage(1)" ${STATE.otaPage >= totalPages ? 'disabled' : ''} class="px-3.5 py-2 rounded-lg text-xs font-semibold border ${STATE.otaPage >= totalPages ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white hover:bg-teal-50 text-teal-800 border-teal-200'}">
+            Berikutnya<i class="fa-solid fa-chevron-right ml-1"></i>
+          </button>`;
+      } else {
+        pagBox.innerHTML = `<span class="text-xs text-slate-400">Menampilkan seluruh ${filtered.length} sasaran</span>`;
+      }
+    }
+
+    function openCommitModal(idAnonim) {
+      if (!STATE.user) {
+        showToast('Silakan Login atau Daftar sebagai OTA terlebih dahulu.', 'error');
+        return openModal('modalLogin');
+      }
+      if (STATE.user.role !== 'OTA') {
+        return showToast('Akses ditolak. Fitur ini khusus untuk akun Orang Tua Asuh (OTA).', 'error');
+      }
+      const item = STATE.catalog.find(x => x.idAnonim === idAnonim);
+      const sisa = item.targetSlot - item.slotTerisi;
+      const isAlreadyMbg = (item.sudahMbgPmt || '').toLowerCase().startsWith('sudah');
+
+      const rawNeeds = (item.kategoriIntervensi || '').split(',').map(x => x.trim()).filter(Boolean);
+      const allowedNeeds = rawNeeds.filter(n => !(isAlreadyMbg && n === 'Bantuan Nutrisi'));
+
+      if (allowedNeeds.length === 0) {
+        return showToast('Sasaran ini sudah menerima MBG dan tidak memiliki kebutuhan non-nutrisi lain.', 'error');
+      }
+
+      document.getElementById('commitIdAnonim').value = idAnonim;
+      document.getElementById('commitSisaSlot').value = sisa;
+      document.getElementById('lblMaxSlot').innerText = sisa;
+      document.getElementById('commitJumlahSlot').max = sisa;
+      document.getElementById('commitJumlahSlot').value = Math.min(5, sisa);
+      document.getElementById('commitSkema').value = 'Micro-OTA';
+      document.getElementById('commitMekanisme').value = 'Lumbung GENTING Desa/Kelurahan (Kader DASHAT)';
+      document.getElementById('commitPihakKetiga').value = '';
+      document.getElementById('commitNominalInput').value = '';
+      document.getElementById('commitUraianFisik').value = '';
+      document.getElementById('commitUraianEdukasi').value = '';
+
+      fillSelect('commitBentukBantuan', allowedNeeds);
+      document.getElementById('commitMbgNotice').classList.toggle('hidden', !(isAlreadyMbg && rawNeeds.includes('Bantuan Nutrisi')));
+
+      document.getElementById('commitInfoBox').innerHTML = `
+        <strong>${item.idAnonim}</strong> &bull; ${item.statusSasaran} (${item.desa}, ${item.kecamatan})<br>
+        Kebutuhan Prioritas: <strong>${item.kategoriIntervensi}</strong>`;
+
+      onCommitBentukChange();
+      onMekanismeChange();
+      openModal('modalCommitOTA');
+    }
+
+    function onCommitBentukChange() {
+      const bentuk = document.getElementById('commitBentukBantuan').value;
+      const nutrisiArea = document.getElementById('commitNutrisiArea');
+      const fisikArea = document.getElementById('commitFisikArea');
+      const eduArea = document.getElementById('commitEdukasiArea');
+
+      nutrisiArea.classList.add('hidden');
+      fisikArea.classList.add('hidden');
+      eduArea.classList.add('hidden');
+
+      if (bentuk === 'Bantuan Nutrisi') {
+        nutrisiArea.classList.remove('hidden');
+        updateCommitCalc();
+      } else if (bentuk === 'Edukasi') {
+        eduArea.classList.remove('hidden');
+      } else {
+        fisikArea.classList.remove('hidden');
+        onFisikModeChange();
+      }
+    }
+
+    function onFisikModeChange() {
+      const mode = document.getElementById('commitBentukDukungan').value;
+      document.getElementById('commitNominalFisikBox').classList.toggle('hidden', mode !== 'Pembiayaan (Rp)');
+    }
+
+    function onMekanismeChange() {
+      const mek = document.getElementById('commitMekanisme').value;
+      const pkBox = document.getElementById('commitPihakKetigaBox');
+      const isPihak3 = mek.includes('Pihak Ketiga');
+      pkBox.classList.toggle('hidden', !isPihak3);
+      document.getElementById('commitPihakKetiga').required = isPihak3;
+    }
+
+    function updateCommitCalc() {
+      const skema = document.getElementById('commitSkema').value;
+      const sisa = Number(document.getElementById('commitSisaSlot').value);
+      const slotBox = document.getElementById('commitSlotBox');
+      const periodeBox = document.getElementById('commitPeriodeBox');
+
+      if (skema === 'OTA Penuh') {
+        slotBox.classList.add('hidden');
+        periodeBox.classList.remove('hidden');
+        const periode = Number(document.getElementById('commitPeriodeBulan').value) || 1;
+        const total = sisa * 15000 * periode;
+        document.getElementById('commitTotalRp').innerText = 'Rp ' + total.toLocaleString('id-ID');
+      } else {
+        slotBox.classList.remove('hidden');
+        periodeBox.classList.add('hidden');
+        let qty = Number(document.getElementById('commitJumlahSlot').value) || 1;
+        if (qty > sisa) qty = sisa;
+        const total = qty * 15000;
+        document.getElementById('commitTotalRp').innerText = 'Rp ' + total.toLocaleString('id-ID');
+      }
+    }
+
+    function submitCommitOTA(e) {
+      e.preventDefault();
+      if (!STATE.user || STATE.user.role !== 'OTA') {
+        return showToast('Hanya akun OTA yang dapat melakukan komitmen.', 'error');
+      }
+
+      const bentuk = document.getElementById('commitBentukBantuan').value;
+      let uraian = '';
+      if (bentuk === 'Edukasi') {
+        uraian = document.getElementById('commitUraianEdukasi').value.trim();
+        if (!uraian) return showToast('Mohon isi uraian kegiatan edukasi.', 'error');
+      } else if (bentuk !== 'Bantuan Nutrisi') {
+        uraian = document.getElementById('commitUraianFisik').value.trim();
+        if (!uraian) return showToast('Mohon isi uraian paket bantuan.', 'error');
+      }
+
+      showLoader('Memproses komitmen OTA...');
+      const payload = {
+        idAnonim: document.getElementById('commitIdAnonim').value,
+        bentukBantuan: bentuk,
+        skema: document.getElementById('commitSkema').value,
+        jumlahSlot: document.getElementById('commitJumlahSlot').value,
+        periodeBulan: document.getElementById('commitPeriodeBulan').value,
+        bentukDukungan: document.getElementById('commitBentukDukungan').value,
+        nominalInput: document.getElementById('commitNominalInput').value,
+        uraianDukungan: uraian,
+        mekanismePenyaluran: document.getElementById('commitMekanisme').value,
+        pihakKetiga: document.getElementById('commitPihakKetiga').value
+      };
+
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        if (!res.success) return showToast(res.message, 'error');
+        closeModal('modalCommitOTA');
+        showToast(res.message);
+        initApp();
+      }).commitOTA(payload, STATE.user);
+    }
+
+    function loadMyAnakAsuh() {
+      showLoader('Memuat daftar anak asuh...');
+      google.script.run.withSuccessHandler(list => {
+        hideLoader();
+        const box = document.getElementById('myAsuhContainer');
+        if (!list.length) {
+          box.innerHTML = `<div class="bg-white p-8 rounded-xl border text-center text-slate-400">Anda belum memiliki anak asuh. Silakan pilih dari Etalase Sasaran 3B.</div>`;
+          return;
+        }
+        box.innerHTML = list.map(m => `
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-mono text-xs font-bold text-teal-700">${m.idAnonim}</span>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-800">${m.bentukBantuan}</span>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ${m.statusKomitmen === 'Aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${m.statusKomitmen}</span>
+              </div>
+              <h3 class="font-bold text-slate-800 mt-1">${m.profil.statusSasaran} — ${m.profil.desa}, Kec. ${m.profil.kecamatan}</h3>
+              <p class="text-xs text-slate-600 mt-0.5">${m.uraian} &bull; <strong>Rp ${Number(m.nominal).toLocaleString('id-ID')}</strong></p>
+              <p class="text-[11px] text-slate-500 mt-0.5">Penyaluran: ${m.mekanisme} ${m.pihakKetiga && m.pihakKetiga !== '-' ? '(' + m.pihakKetiga + ')' : ''} | Status Sasaran: <strong>${m.profil.statusOTA}</strong></p>
+            </div>
+            <button onclick="openRaporModal('${m.idAnonim}', '${m.profil.statusSasaran}', '${m.profil.desa}, ${m.profil.kecamatan}')" class="bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap">
+              <i class="fa-solid fa-file-medical-alt mr-1.5"></i> Riwayat Monitoring
+            </button>
+          </div>`).join('');
+      }).getMyAnakAsuh(STATE.user.username);
+    }
+
+    // ==================== MODUL LAPORAN RAPOR BERDASARKAN OTA ====================
+    function initRaporOtaView() {
+      const isAdmin = STATE.user && STATE.user.role === 'ADMIN_OPD';
+      const selWrap = document.getElementById('raporOtaSelectorWrap');
+      const ownTitle = document.getElementById('raporOtaOwnTitle');
+      const btnWa = document.getElementById('btnWaOta');
+
+      if (isAdmin) {
+        selWrap.classList.remove('hidden');
+        ownTitle.classList.add('hidden');
+        btnWa.classList.remove('hidden');
+        showLoader('Memuat daftar Orang Tua Asuh...');
+        google.script.run.withSuccessHandler(list => {
+          hideLoader();
+          const sel = document.getElementById('selectReportOta');
+          sel.innerHTML = '<option value="">-- Pilih Orang Tua Asuh (OTA) --</option>';
+          list.forEach(o => {
+            sel.innerHTML += `<option value="${o.username}">${o.nama} (${o.kategoriMitra}) — ${o.totalSasaran} Sasaran</option>`;
+          });
+          const firstWithData = list.find(x => x.totalSasaran > 0) || list[0];
+          if (firstWithData) {
+            sel.value = firstWithData.username;
+            loadConsolidatedReport(firstWithData.username);
+          } else {
+            document.getElementById('printableOtaReport').innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">Belum ada data Orang Tua Asuh terdaftar.</div>`;
+          }
+        }).getOtaListForReport();
+      } else {
+        selWrap.classList.add('hidden');
+        ownTitle.classList.remove('hidden');
+        btnWa.classList.add('hidden');
+        loadConsolidatedReport(STATE.user.username);
+      }
+    }
+
+    function loadConsolidatedReport(usernameOTA) {
+      if (!usernameOTA) {
+        document.getElementById('printableOtaReport').innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">Silakan pilih Orang Tua Asuh (OTA) terlebih dahulu.</div>`;
+        return;
+      }
+      showLoader('Menyusun rapor anak asuh OTA...');
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        STATE.currentReport = res;
+        renderConsolidatedReport(res);
+      }).getConsolidatedOtaReport(usernameOTA);
+    }
+
+    function renderConsolidatedReport(res) {
+      const box = document.getElementById('printableOtaReport');
+      const ota = res.ota;
+      const sum = res.summary;
+
+      const itemsHtml = res.items.length === 0
+        ? `<div class="border border-dashed border-slate-300 rounded-xl p-8 text-center text-slate-400 text-sm">Orang Tua Asuh ini belum memiliki sasaran 3B yang diasuh.</div>`
+        : res.items.map((it, idx) => {
+            const isGrad = it.profil.statusOTA === 'Graduasi Tuntas';
+            const badgeClass = isGrad ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-sky-100 text-sky-800 border-sky-300';
+            const logsHtml = it.logs.length === 0
+              ? `<div class="text-xs text-slate-400 italic py-2">Belum ada input monitoring bulanan dari PIC Desa/PLKB untuk sasaran ini.</div>`
+              : `<div class="overflow-x-auto mt-2">
+                  <table class="w-full text-[11px] text-left border border-slate-200">
+                    <thead class="bg-slate-100 text-slate-700">
+                      <tr>
+                        <th class="p-2 border-b">Bln</th>
+                        <th class="p-2 border-b">Intervensi Diterima</th>
+                        <th class="p-2 border-b text-center">DASHAT</th>
+                        <th class="p-2 border-b">BB / TB / LILA</th>
+                        <th class="p-2 border-b">Tren</th>
+                        <th class="p-2 border-b">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      ${it.logs.map(l => `
+                        <tr>
+                          <td class="p-2 font-bold">Ke-${l.Bulan_Ke}</td>
+                          <td class="p-2">${l.Jenis_Intervensi}<div class="text-[10px] text-slate-400">${l.Catatan || ''}</div></td>
+                          <td class="p-2 text-center">${l.Via_DASHAT}</td>
+                          <td class="p-2">${l.BB_Kg} kg / ${l.TB_Cm} cm / ${l.LILA_Cm} cm</td>
+                          <td class="p-2 font-bold ${l.Status_Tren.startsWith('T') ? 'text-rose-600' : 'text-emerald-700'}">${l.Status_Tren}</td>
+                          <td class="p-2 font-semibold">${l.Status_Graduasi}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                  </table>
+                </div>`;
+
+            return `
+            <div class="print-card border border-slate-200 rounded-xl p-4 mb-4 bg-white">
+              <div class="flex flex-wrap justify-between items-start gap-2 border-b border-slate-100 pb-2.5 mb-2">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="bg-teal-700 text-white text-[11px] font-bold px-2 py-0.5 rounded">#${idx + 1}</span>
+                    <span class="font-mono text-xs font-bold text-teal-800">${it.idAnonim}</span>
+                    <span class="text-xs font-bold text-slate-800">&bull; ${it.profil.statusSasaran} (${it.profil.usia})</span>
+                  </div>
+                  <div class="text-xs text-slate-500 mt-1">
+                    <i class="fa-solid fa-location-dot text-teal-600 mr-1"></i>${it.profil.desa}, Kec. ${it.profil.kecamatan}
+                    &nbsp;|&nbsp; Bantuan: <strong>${(it.bentukList || []).join(', ')}</strong>
+                  </div>
+                  ${it.mekanismeList && it.mekanismeList.length ? `<div class="text-[11px] text-slate-400 mt-0.5">Penyaluran: ${it.mekanismeList.join(', ')}</div>` : ''}
+                </div>
+                <div class="text-right">
+                  <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${badgeClass}">${it.profil.statusOTA}</span>
+                  <div class="text-[11px] text-slate-500 mt-1">${it.skemaList.join(' + ')} &bull; Rp ${Number(it.nominal).toLocaleString('id-ID')}</div>
+                </div>
+              </div>
+              <div class="text-xs text-slate-600 mb-2"><strong>Kondisi Awal:</strong> ${it.profil.masalah}</div>
+              ${logsHtml}
+            </div>`;
+          }).join('');
+
+      box.innerHTML = `
+        <div class="border-b-2 border-teal-800 pb-4 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <div class="text-xs font-bold text-teal-700 uppercase tracking-widest">Pemerintah Kabupaten Lombok Timur &bull; Program GENTING</div>
+            <h2 class="text-xl md:text-2xl font-extrabold text-slate-900 mt-0.5">RAPOR DAMPAK ORANG TUA ASUH (BALE ASUH LOTIM)</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Laporan Perkembangan Intervensi Sasaran 3B (Ibu Hamil, Ibu Menyusui, Anak Baduta)</p>
+          </div>
+          <div class="text-left sm:text-right text-[11px] text-slate-500">
+            <div>Tanggal Cetak:</div>
+            <div class="font-bold text-slate-700">${sum.tglCetak}</div>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div>
+            <div class="text-slate-400 uppercase text-[10px] font-bold">Nama Orang Tua Asuh / Mitra CSR</div>
+            <div class="text-base font-bold text-slate-800">${ota.nama}</div>
+          </div>
+          <div>
+            <div class="text-slate-400 uppercase text-[10px] font-bold">Kategori Mitra & Kontak</div>
+            <div class="font-semibold text-slate-700">${ota.kategoriMitra} &bull; WA: ${ota.noWa}</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div class="border border-slate-200 rounded-xl p-3 text-center">
+            <div class="text-[11px] text-slate-500 font-semibold">Total Sasaran Diasuh</div>
+            <div class="text-xl font-extrabold text-teal-800 mt-0.5">${sum.totalSasaran}</div>
+          </div>
+          <div class="border border-slate-200 rounded-xl p-3 text-center">
+            <div class="text-[11px] text-slate-500 font-semibold">Total Komitmen</div>
+            <div class="text-lg font-extrabold text-slate-800 mt-0.5">Rp ${Number(sum.totalNominal).toLocaleString('id-ID')}</div>
+            <div class="text-[10px] text-slate-400">(${sum.totalSlot} Slot/Paket)</div>
+          </div>
+          <div class="border border-sky-200 bg-sky-50/50 rounded-xl p-3 text-center">
+            <div class="text-[11px] text-sky-700 font-semibold">Sedang Intervensi</div>
+            <div class="text-xl font-extrabold text-sky-800 mt-0.5">${sum.jumlahBerjalan}</div>
+          </div>
+          <div class="border border-emerald-200 bg-emerald-50/60 rounded-xl p-3 text-center">
+            <div class="text-[11px] text-emerald-700 font-semibold">Graduasi Tuntas</div>
+            <div class="text-xl font-extrabold text-emerald-800 mt-0.5">${sum.jumlahGraduasi}</div>
+          </div>
+        </div>
+
+        <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Rincian Perkembangan Sasaran Asuh (Anonim)</h3>
+        ${itemsHtml}
+
+        <div class="print-card mt-8 pt-5 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
+          <div class="text-slate-500 leading-relaxed">
+            <strong class="text-slate-700">Catatan Perlindungan Data:</strong><br>
+            Sesuai standar privasi medis, nama lengkap, alamat detail, dan NIK sasaran dianonimkan menjadi Kode ID BALE ASUH. Data antropometri diverifikasi secara berkala oleh PKB/PLKB dan PIC Desa di lapangan.
+          </div>
+          <div class="text-center sm:text-right">
+            <div>Selong, ${sum.tglCetak.split(',')[0]}</div>
+            <div class="font-bold text-slate-800 mt-0.5">Tim Pengendali GENTING / DP3AKB</div>
+            <div class="text-slate-500">Kabupaten Lombok Timur</div>
+            <div class="h-14"></div>
+            <div class="font-bold text-slate-800 underline">______________________________</div>
+            <div class="text-[11px] text-slate-500">Dokumen Terverifikasi Sistem BALE ASUH LOTIM</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function sendReportViaWA() {
+      if (!STATE.currentReport) return showToast('Pilih OTA terlebih dahulu.', 'error');
+      const ota = STATE.currentReport.ota;
+      const sum = STATE.currentReport.summary;
+      let wa = (ota.noWa || '').replace(/[^0-9]/g, '');
+      if (wa.startsWith('0')) wa = '62' + wa.substring(1);
+      if (!wa) return showToast('Nomor WhatsApp OTA belum tercatat.', 'error');
+
+      const lines = [
+        `*RAPOR DAMPAK BALE ASUH LOTIM*`,
+        `Yth. Bapak/Ibu *${ota.nama}* (${ota.kategoriMitra}),`,
+        ``,
+        `Berikut ringkasan perkembangan sasaran 3B yang Bapak/Ibu asuh di Kabupaten Lombok Timur:`,
+        `- Total Sasaran Diasuh: *${sum.totalSasaran} sasaran*`,
+        `- Total Komitmen: *Rp ${Number(sum.totalNominal).toLocaleString('id-ID')}* (${sum.totalSlot} slot/paket)`,
+        `- Sedang Intervensi: *${sum.jumlahBerjalan}*`,
+        `- Graduasi Tuntas (Lulus): *${sum.jumlahGraduasi}*`,
+        ``,
+        `Rapor lengkap (PDF) dapat diakses langsung dengan login ke Portal BALE ASUH LOTIM menu *Rapor Dampak Saya*.`,
+        `Terima kasih atas gotong royongnya untuk Generasi Emas Lombok Timur!`
+      ];
+      const url = `https://wa.me/${wa}?text=${encodeURIComponent(lines.join('\n'))}`;
+      window.open(url, '_blank');
+    }
+
+    // ==================== PORTAL LAPANGAN (PIC_DESA & PLKB + PAGINATION 20/HAL) ====================
+    function lockPlkbWilayah() {
+      const kecEl = document.getElementById('inKecamatan');
+      const desaEl = document.getElementById('inDesa');
+      kecEl.disabled = false;
+      desaEl.disabled = false;
+
+      if (!STATE.user) return;
+      const role = STATE.user.role;
+      const uKec = STATE.user.kecamatan;
+      const uDesa = STATE.user.desa;
+
+      if ((role === 'PLKB' || role === 'PIC_DESA') && uKec.toUpperCase() !== 'SEMUA') {
+        setSelectCaseInsensitive(kecEl, uKec);
+        populateDesaInput();
+        kecEl.disabled = true;
+
+        if (role === 'PIC_DESA') {
+          setSelectCaseInsensitive(desaEl, uDesa);
+          desaEl.disabled = true;
+        } else if (role === 'PLKB' && uDesa.toUpperCase() !== 'SEMUA') {
+          const allowed = uDesa.split(',').map(d => d.trim().toLowerCase()).filter(Boolean);
+          const allDesas = (STATE.master.wilayah[kecEl.value] || []).slice().sort();
+          const filteredDesas = allDesas.filter(d => allowed.includes(d.trim().toLowerCase()));
+          if (filteredDesas.length > 0) {
+            fillSelect('inDesa', filteredDesas, filteredDesas.length > 1 ? '-- Pilih Desa Binaan --' : null);
+          }
+        }
+      }
+    }
+
+    function populateDesaInput() {
+      const kec = document.getElementById('inKecamatan').value;
+      const desaList = (STATE.master.wilayah[kec] || []).slice().sort();
+      fillSelect('inDesa', desaList, '-- Pilih Desa/Kelurahan --');
+    }
+
+    function toggleDynamicFields() {
+      const st = document.getElementById('inStatusSasaran').value;
+      if (st === 'Ibu Hamil') {
+        document.getElementById('boxBumil').classList.remove('hidden');
+        document.getElementById('boxMenyusu').classList.add('hidden');
+      } else {
+        document.getElementById('boxBumil').classList.add('hidden');
+        document.getElementById('boxMenyusu').classList.remove('hidden');
+      }
+      hitungUsiaOtomatis();
+    }
+
+    function hitungUsiaOtomatis() {
+      const tgl = document.getElementById('inTglLahir').value;
+      if (!tgl) return;
+      const birth = new Date(tgl);
+      const now = new Date();
+      const diffMonths = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
+      const st = document.getElementById('inStatusSasaran').value;
+      document.getElementById('inUsia').value = st === 'Anak Baduta' ? `${Math.max(0, diffMonths)} Bln` : `${Math.floor(diffMonths / 12)} Thn`;
+    }
+
+    function resetFormToCreateMode() {
+      document.getElementById('formSasaran3B').reset();
+      document.getElementById('inEditIdAnonim').value = '';
+      document.getElementById('formSasaranHeader').className = 'bg-teal-700 px-6 py-4 text-white flex flex-wrap items-center justify-between gap-2';
+      document.getElementById('formSasaranTitle').innerHTML = '<i class="fa-solid fa-file-circle-plus mr-2"></i>Input & Screening Sasaran 3B (PIC Desa / PLKB)';
+      document.getElementById('formSasaranSub').innerText = 'Formulir otomatis menyesuaikan kolom input berdasarkan Status Sasaran (Ibu Hamil / Ibu Menyusui / Anak Baduta).';
+      document.getElementById('btnSubmitSasaran').innerHTML = '<i class="fa-solid fa-paper-plane mr-1.5"></i> Simpan & Kirim Verifikasi';
+      document.getElementById('btnSubmitSasaran').className = 'bg-teal-700 hover:bg-teal-800 text-white px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm';
+      document.getElementById('btnCancelEditTop').classList.add('hidden');
+      document.getElementById('btnCancelEditBottom').classList.add('hidden');
+      document.getElementById('btnResetForm').classList.remove('hidden');
+      lockPlkbWilayah();
+      toggleDynamicFields();
+    }
+
+    function openEditSasaran(idAnonim) {
+      const s = STATE.plkbList.find(x => x.ID_Sasaran_Anonim === idAnonim);
+      if (!s) return showToast('Data sasaran tidak ditemukan.', 'error');
+
+      document.getElementById('inEditIdAnonim').value = s.ID_Sasaran_Anonim;
+      lockPlkbWilayah();
+      setSelectCaseInsensitive(document.getElementById('inKecamatan'), s.Wilayah_Kecamatan);
+      populateDesaInput();
+      setSelectCaseInsensitive(document.getElementById('inDesa'), s.Wilayah_Desa_Kelurahan);
+
+      document.getElementById('inAlamatLengkap').value = (s.Alamat_Lengkap && s.Alamat_Lengkap !== '-') ? s.Alamat_Lengkap : '';
+      document.getElementById('inKodeKeluarga').value = s.KODE_KELUARGA;
+      document.getElementById('inNamaKK').value = s.NAMA_KEPALA_KELUARGA;
+      document.getElementById('inNamaSasaran').value = s.NAMA_SASARAN;
+      document.getElementById('inTglLahir').value = s.TGL_LAHIR_SASARAN;
+      document.getElementById('inUsia').value = s.USIA_SASARAN;
+      document.getElementById('inStatusSasaran').value = s.STATUS_SASARAN;
+      toggleDynamicFields();
+
+      if (s.STATUS_SASARAN === 'Ibu Hamil') {
+        if (s.Status_Kesehatan && s.Status_Kesehatan !== '-') document.getElementById('inStatusKesehatan').value = s.Status_Kesehatan;
+        if (s.Pemeriksaan_Kehamilan && s.Pemeriksaan_Kehamilan !== '-') document.getElementById('inPeriksaHamil').value = s.Pemeriksaan_Kehamilan;
+        if (s.Konsumsi_TTD && s.Konsumsi_TTD !== '-') document.getElementById('inKonsumsiTTD').value = s.Konsumsi_TTD;
+      } else {
+        if (s.Status_Menyusu_MPASI && s.Status_Menyusu_MPASI !== '-') document.getElementById('inStatusMenyusu').value = s.Status_Menyusu_MPASI;
+      }
+
+      document.getElementById('inKondisiRumah').value = s.KONDISI_RUMAH;
+      document.getElementById('inAirBersih').value = s.AIR_BERSIH;
+      document.getElementById('inSudahMbg').value = s.Sudah_MBG_PMT || 'Belum';
+      document.getElementById('inStatusPrioritas').value = s.STATUS_PRIORITAS;
+      document.getElementById('inKeterangan').value = s.Keterangan_Masalah;
+
+      const selectedInts = (s.KATEGORI_INTERVENSI || '').split(',').map(x => x.trim());
+      document.querySelectorAll('input[name="chkIntervensi"]').forEach(cb => {
+        cb.checked = selectedInts.includes(cb.value);
+      });
+
+      document.getElementById('formSasaranHeader').className = 'bg-amber-500 px-6 py-4 text-slate-900 flex flex-wrap items-center justify-between gap-2';
+      document.getElementById('formSasaranTitle').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2"></i>Revisi Data Sasaran: ${s.ID_Sasaran_Anonim}`;
+      document.getElementById('formSasaranSub').innerText = 'Perbarui kesalahan input, alamat lengkap, atau perubahan prioritas intervensi. Status verifikasi & slot OTA tetap aman.';
+      document.getElementById('btnSubmitSasaran').innerHTML = '<i class="fa-solid fa-floppy-disk mr-1.5"></i> Simpan Perubahan Revisi';
+      document.getElementById('btnSubmitSasaran').className = 'bg-amber-500 hover:bg-amber-600 text-slate-900 px-6 py-2.5 rounded-lg text-sm font-bold shadow-sm';
+      document.getElementById('btnCancelEditTop').classList.remove('hidden');
+      document.getElementById('btnCancelEditBottom').classList.remove('hidden');
+      document.getElementById('btnResetForm').classList.add('hidden');
+
+      switchView('plkb_input', true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function cancelEditSasaran() {
+      resetFormToCreateMode();
+      switchView('plkb_list');
+    }
+
+    function submitSasaran3B(e) {
+      e.preventDefault();
+      const checked = Array.from(document.querySelectorAll('input[name="chkIntervensi"]:checked')).map(c => c.value);
+      if (checked.length === 0) return showToast('Pilih minimal 1 kategori kebutuhan intervensi.', 'error');
+
+      const editId = document.getElementById('inEditIdAnonim').value;
+      const isEdit = editId !== '';
+
+      showLoader(isEdit ? 'Menyimpan perubahan revisi...' : 'Menyimpan data sasaran...');
+      const payload = {
+        idAnonim: editId,
+        kecamatan: document.getElementById('inKecamatan').value,
+        desa: document.getElementById('inDesa').value,
+        alamatLengkap: document.getElementById('inAlamatLengkap').value,
+        kodeKeluarga: document.getElementById('inKodeKeluarga').value,
+        namaKK: document.getElementById('inNamaKK').value,
+        namaSasaran: document.getElementById('inNamaSasaran').value,
+        tglLahir: document.getElementById('inTglLahir').value,
+        usiaSasaran: document.getElementById('inUsia').value,
+        statusSasaran: document.getElementById('inStatusSasaran').value,
+        statusKesehatan: document.getElementById('inStatusKesehatan').value,
+        pemeriksaanKehamilan: document.getElementById('inPeriksaHamil').value,
+        konsumsiTTD: document.getElementById('inKonsumsiTTD').value,
+        statusMenyusu: document.getElementById('inStatusMenyusu').value,
+        kondisiRumah: document.getElementById('inKondisiRumah').value,
+        airBersih: document.getElementById('inAirBersih').value,
+        sudahMbgPmt: document.getElementById('inSudahMbg').value,
+        statusPrioritas: document.getElementById('inStatusPrioritas').value,
+        kategoriIntervensi: checked,
+        keteranganMasalah: document.getElementById('inKeterangan').value
+      };
+
+      if (isEdit) {
+        google.script.run.withSuccessHandler(res => {
+          hideLoader();
+          if (!res.success) return showToast(res.message, 'error');
+          showToast(res.message);
+          resetFormToCreateMode();
+          initApp();
+          switchView('plkb_list');
+        }).updateSasaran3B(payload, STATE.user);
+      } else {
+        google.script.run.withSuccessHandler(res => {
+          hideLoader();
+          if (!res.success) return showToast(res.message, 'error');
+          showToast(res.message);
+          resetFormToCreateMode();
+        }).saveSasaran3B(payload, STATE.user);
+      }
+    }
+
+    function loadPlkbList() {
+      showLoader('Memuat daftar sasaran...');
+      const canVerify = STATE.user && (STATE.user.role === 'PLKB' || STATE.user.role === 'ADMIN_OPD');
+      document.getElementById('plkbListSub').innerHTML = canVerify
+        ? 'Anda memiliki otorisasi untuk <strong>Revisi</strong> (kolom kiri) dan <strong>Verifikasi</strong> data sasaran agar tayang di Portal OTA.'
+        : 'Gunakan tombol <strong>Revisi</strong> di kolom paling kiri jika ada kesalahan input atau perubahan prioritas intervensi.';
+
+      google.script.run.withSuccessHandler(list => {
+        hideLoader();
+        STATE.plkbList = list;
+        STATE.plkbPage = 1;
+        renderPlkbTable();
+      }).getSasaranForPLKB(STATE.user.kecamatan, STATE.user.desa, STATE.user.role);
+    }
+
+    function changePlkbPage(delta) {
+      STATE.plkbPage += delta;
+      renderPlkbTable();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderPlkbTable() {
+      const list = STATE.plkbList;
+      const tbody = document.getElementById('plkbTableBody');
+      const pagBox = document.getElementById('plkbPagination');
+      const canVerify = STATE.user && (STATE.user.role === 'PLKB' || STATE.user.role === 'ADMIN_OPD');
+
+      if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Belum ada data sasaran di wilayah ini.</td></tr>`;
+        pagBox.innerHTML = '';
+        return;
+      }
+
+      const totalPages = Math.ceil(list.length / STATE.plkbPerPage);
+      if (STATE.plkbPage < 1) STATE.plkbPage = 1;
+      if (STATE.plkbPage > totalPages) STATE.plkbPage = totalPages;
+
+      const startIdx = (STATE.plkbPage - 1) * STATE.plkbPerPage;
+      const pageItems = list.slice(startIdx, startIdx + STATE.plkbPerPage);
+
+      tbody.innerHTML = pageItems.map(s => {
+        const isPending = s.Status_Verifikasi === 'Menunggu Verifikasi';
+        const verifHtml = isPending
+          ? (canVerify
+              ? `<button onclick="approveSasaranFromList('${s.ID_Sasaran_Anonim}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-md text-xs font-bold mb-1 shadow-xs">
+                   <i class="fa-solid fa-check-double mr-1"></i>Verifikasi
+                 </button>`
+              : `<span class="inline-block bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[11px] font-semibold mb-1">Menunggu Verifikasi PLKB</span>`)
+          : `<span class="inline-block bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[11px] font-semibold mb-1"><i class="fa-solid fa-check mr-1"></i>Terverifikasi</span>`;
+
+        return `
+        <tr class="hover:bg-slate-50">
+          <td class="p-3 text-center">
+            <button onclick="openEditSasaran('${s.ID_Sasaran_Anonim}')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-2.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition" title="Revisi data sasaran">
+              <i class="fa-solid fa-pen-to-square mr-1"></i>Revisi
+            </button>
+          </td>
+          <td class="p-3 font-mono text-xs font-bold text-teal-700">${s.ID_Sasaran_Anonim}</td>
+          <td class="p-3">
+            <div class="font-bold text-slate-800">${s.NAMA_SASARAN} (${s.USIA_SASARAN})</div>
+            <div class="text-xs text-slate-500">KK: ${s.NAMA_KEPALA_KELUARGA} (${s.KODE_KELUARGA})</div>
+            <div class="text-[11px] font-semibold text-teal-700 mt-0.5">${s.STATUS_SASARAN}</div>
+          </td>
+          <td class="p-3">
+            <div class="text-xs font-semibold">${s.Wilayah_Desa_Kelurahan}, ${s.Wilayah_Kecamatan}</div>
+            <div class="text-xs text-slate-500 mt-0.5"><i class="fa-solid fa-map-pin text-rose-500 mr-1"></i>${s.Alamat_Lengkap || '-'}</div>
+          </td>
+          <td class="p-3">
+            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800">${s.STATUS_PRIORITAS.substring(0,2)}</span>
+            <div class="text-xs text-slate-600 mt-0.5">${s.KATEGORI_INTERVENSI}</div>
+          </td>
+          <td class="p-3 text-xs">
+            <div>${verifHtml}</div>
+            <div class="font-semibold text-teal-700">${s.Status_OTA} (${s.Slot_Terisi}/${s.Target_Slot})</div>
+          </td>
+          <td class="p-3 text-center space-y-1">
+            <button onclick="openMonitoringModal('${s.ID_Sasaran_Anonim}', '${s.NAMA_SASARAN}', '${s.STATUS_SASARAN}')" class="bg-teal-600 hover:bg-teal-700 text-white px-2.5 py-1 rounded text-xs font-semibold block w-full">+ Monitoring</button>
+            <button onclick="openRaporModal('${s.ID_Sasaran_Anonim}', '${s.STATUS_SASARAN}', '${s.Wilayah_Desa_Kelurahan}, ${s.Wilayah_Kecamatan}')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2.5 py-1 rounded text-xs font-semibold block w-full">Riwayat</button>
+          </td>
+        </tr>`;
+      }).join('');
+
+      pagBox.innerHTML = `
+        <span class="text-slate-500">Menampilkan ${startIdx + 1}–${Math.min(startIdx + STATE.plkbPerPage, list.length)} dari <strong>${list.length}</strong> sasaran</span>
+        <div class="flex items-center gap-2">
+          <button onclick="changePlkbPage(-1)" ${STATE.plkbPage <= 1 ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg font-semibold border ${STATE.plkbPage <= 1 ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white hover:bg-teal-50 text-teal-800 border-teal-200'}">Prev</button>
+          <span class="font-bold text-slate-700">${STATE.plkbPage} / ${totalPages}</span>
+          <button onclick="changePlkbPage(1)" ${STATE.plkbPage >= totalPages ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg font-semibold border ${STATE.plkbPage >= totalPages ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white hover:bg-teal-50 text-teal-800 border-teal-200'}">Next</button>
+        </div>`;
+    }
+
+    function approveSasaranFromList(idAnonim) {
+      if (!confirm(`Verifikasi sasaran ${idAnonim} agar langsung tayang di Portal OTA?`)) return;
+      showLoader('Memverifikasi sasaran...');
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        showToast(res.message);
+        loadPlkbList();
+        initApp();
+      }).verifySasaran(idAnonim);
+    }
+
+    function openMonitoringModal(idAnonim, nama, status) {
+      document.getElementById('monIdAnonim').value = idAnonim;
+      document.getElementById('monTargetHeader').innerText = `${idAnonim} — ${nama} (${status})`;
+      openModal('modalMonitoring');
+    }
+
+    function submitMonitoring(e) {
+      e.preventDefault();
+      showLoader('Menyimpan monitoring...');
+      const payload = {
+        idAnonim: document.getElementById('monIdAnonim').value,
+        bulanKe: document.getElementById('monBulanKe').value,
+        viaDashat: document.getElementById('monDashat').value,
+        jenisIntervensi: document.getElementById('monJenis').value,
+        bbKg: document.getElementById('monBB').value,
+        tbCm: document.getElementById('monTB').value,
+        lilaCm: document.getElementById('monLILA').value,
+        statusTren: document.getElementById('monTren').value,
+        statusGraduasi: document.getElementById('monGraduasi').value,
+        catatan: document.getElementById('monCatatan').value
+      };
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        closeModal('modalMonitoring');
+        showToast(res.message);
+        loadPlkbList();
+      }).saveMonitoringLog(payload, STATE.user);
+    }
+
+    function openRaporModal(idAnonim, statusSasaran, wilayah) {
+      showLoader('Memuat riwayat perkembangan...');
+      document.getElementById('raporHeaderInfo').innerHTML = `
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>ID Sasaran (Anonim): <strong class="font-mono text-teal-800">${idAnonim}</strong></div>
+          <div>Kategori: <strong>${statusSasaran}</strong></div>
+          <div class="col-span-2">Lokasi: <strong>${wilayah}</strong></div>
+        </div>`;
+      google.script.run.withSuccessHandler(logs => {
+        hideLoader();
+        const box = document.getElementById('raporTimeline');
+        if (!logs.length) {
+          box.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">Belum ada catatan monitoring bulanan untuk sasaran ini.</div>`;
+        } else {
+          box.innerHTML = logs.map(l => `
+            <div class="border border-slate-200 rounded-xl p-3.5 text-xs bg-white">
+              <div class="flex justify-between items-center mb-1.5">
+                <span class="font-bold text-teal-800">Bulan Ke-${l.Bulan_Ke} &bull; ${l.Jenis_Intervensi}</span>
+                <span class="px-2 py-0.5 rounded-full font-bold ${l.Status_Tren.startsWith('T') ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">${l.Status_Tren}</span>
+              </div>
+              <div class="grid grid-cols-4 gap-2 text-slate-600 bg-slate-50 p-2 rounded-lg mb-1.5">
+                <div>BB: <strong>${l.BB_Kg} kg</strong></div>
+                <div>TB: <strong>${l.TB_Cm} cm</strong></div>
+                <div>LILA: <strong>${l.LILA_Cm} cm</strong></div>
+                <div>DASHAT: <strong>${l.Via_DASHAT}</strong></div>
+              </div>
+              <p class="text-slate-600">${l.Catatan || '-'}</p>
+              <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
+                <span>Status: <strong>${l.Status_Graduasi}</strong></span>
+                <span>Petugas: ${l.Input_By} (${l.Timestamp})</span>
+              </div>
+            </div>`).join('');
+        }
+        openModal('modalRapor');
+      }).getMonitoringBySasaran(idAnonim);
+    }
+
+    // ==================== COMMAND CENTER ADMIN ====================
+    function loadAdminDashboard() {
+      showLoader('Memuat Command Center...');
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        document.getElementById('admTotal').innerText = res.stats.total;
+        document.getElementById('admP1').innerText = res.stats.p1;
+        document.getElementById('admPending').innerText = res.stats.pendingVerif;
+        document.getElementById('admOTA').innerText = res.stats.sudahOTA;
+        document.getElementById('admGraduasi').innerText = res.stats.graduasi;
+
+        const ewBox = document.getElementById('admEarlyWarningBox');
+        if (res.earlyWarnings.length > 0) {
+          ewBox.classList.remove('hidden');
+          document.getElementById('admEarlyWarningList').innerHTML = res.earlyWarnings.map(w =>
+            `<div>&bull; <strong>${w.idAnonim}</strong> (Bulan ke-${w.bulanKe}, BB: ${w.bb} kg) — ${w.catatan} <em>[Petugas: ${w.petugas}]</em></div>`
+          ).join('');
+        } else {
+          ewBox.classList.add('hidden');
+        }
+
+        const pBody = document.getElementById('admPendingBody');
+        pBody.innerHTML = res.pendingList.length ? res.pendingList.map(p => `
+          <tr>
+            <td class="py-2"><strong>${p.idAnonim}</strong><br><span class="text-slate-500">${p.namaSasaran} (${p.statusSasaran})</span></td>
+            <td class="py-2">${p.desa}, ${p.kecamatan}<br><span class="text-[11px] text-slate-400">${p.alamat}</span></td>
+            <td class="py-2"><span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">${p.prioritas}</span></td>
+            <td class="py-2 text-right">
+              <button onclick="approveSasaran('${p.idAnonim}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded font-semibold">Verifikasi</button>
+            </td>
+          </tr>`).join('') : `<tr><td colspan="4" class="py-4 text-center text-slate-400">Semua sasaran sudah diverifikasi.</td></tr>`;
+
+        const kBody = document.getElementById('admKomitmenBody');
+        kBody.innerHTML = res.komitmenList.length ? res.komitmenList.map(k => `
+          <tr>
+            <td class="py-2">
+              <strong>${k.namaOTA}</strong><br>
+              <span class="text-teal-700 font-semibold">${k.bentukBantuan}</span> &bull; <span class="text-slate-500">${k.skema}</span><br>
+              <span class="text-[10px] text-slate-400">${k.mekanisme}</span>
+            </td>
+            <td class="py-2 font-mono font-bold text-teal-700">${k.idAnonim}</td>
+            <td class="py-2">Rp ${Number(k.nominal).toLocaleString('id-ID')}</td>
+            <td class="py-2 text-right">
+              ${k.status === 'Aktif'
+                ? `<span class="text-emerald-700 font-bold">Aktif</span>`
+                : `<button onclick="approveKomitmen('${k.idMatch}')" class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded font-semibold">Konfirmasi</button>`}
+            </td>
+          </tr>`).join('') : `<tr><td colspan="4" class="py-4 text-center text-slate-400">Belum ada transaksi komitmen OTA.</td></tr>`;
+      }).getAdminDashboardData();
+    }
+
+    function approveSasaran(idAnonim) {
+      showLoader('Memverifikasi sasaran...');
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        showToast(res.message);
+        loadAdminDashboard();
+        initApp();
+      }).verifySasaran(idAnonim);
+    }
+
+    function approveKomitmen(idMatch) {
+      showLoader('Mengonfirmasi komitmen OTA...');
+      google.script.run.withSuccessHandler(res => {
+        hideLoader();
+        showToast(res.message);
+        loadAdminDashboard();
+      }).confirmKomitmenOTA(idMatch);
+    }
+  </script>
+</body>
+</html>

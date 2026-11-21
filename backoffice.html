@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backoffice — Bale Asuh Lotim</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen font-sans">
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginBox" class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md border border-slate-200">
+      <div class="text-center mb-6">
+        <span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full uppercase tracking-wider">Panel Khusus Backoffice</span>
+        <h1 class="text-2xl font-extrabold text-slate-800 mt-3">Bale Asuh Lotim</h1>
+        <p class="text-sm text-slate-500">Manajemen User, Wilayah & Import Data</p>
+      </div>
+      <form id="formLogin" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Username</label>
+          <input type="text" id="loginUser" value="backoffice" required class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+          <input type="password" id="loginPass" value="backoffice123" required class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition">Masuk Backoffice</button>
+      </form>
+      <p id="loginErr" class="text-xs text-red-600 text-center mt-3 hidden"></p>
+      <p class="text-[11px] text-slate-400 text-center mt-6">Developed by umekka</p>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="mainApp" class="hidden">
+    <header class="bg-indigo-900 text-white shadow">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 class="font-bold text-lg">Backoffice Bale Asuh Lotim</h1>
+          <p class="text-xs text-indigo-200" id="userBadge">Operator Backoffice</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="index.html" class="text-xs bg-indigo-800 hover:bg-indigo-700 px-3 py-2 rounded-lg">Buka Aplikasi Utama</a>
+          <button onclick="logout()" class="text-xs bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg font-semibold">Keluar</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- TABS -->
+    <div class="max-w-7xl mx-auto px-4 mt-6">
+      <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+        <button onclick="switchTab('users')" id="tabBtn-users" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white">1. Manajemen User</button>
+        <button onclick="switchTab('wilayah')" id="tabBtn-wilayah" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-600 hover:bg-slate-50">2. Master Wilayah</button>
+        <button onclick="switchTab('sasaran')" id="tabBtn-sasaran" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-600 hover:bg-slate-50">3. Import Sasaran 3B (Per Desa)</button>
+      </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 py-6">
+
+      <!-- TAB 1: MANAJEMEN USER -->
+      <section id="tab-users" class="space-y-4">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="filterRole" onchange="renderUsers()" class="border rounded-xl px-3 py-2 text-sm">
+              <option value="ALL">Semua Role</option>
+              <option value="BACKOFFICE">BACKOFFICE</option>
+              <option value="ADMIN_OPD">ADMIN_OPD</option>
+              <option value="PLKB">PLKB</option>
+              <option value="PIC_DESA">PIC_DESA</option>
+              <option value="OTA">OTA</option>
+            </select>
+            <input type="text" id="searchUser" oninput="renderUsers()" placeholder="Cari nama / username / wilayah..." class="border rounded-xl px-3 py-2 text-sm w-64">
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="downloadTemplate('users')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">Download Template CSV</button>
+            <label class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold cursor-pointer">
+              Import CSV User
+              <input type="file" accept=".csv" class="hidden" onchange="importUsersCSV(event)">
+            </label>
+            <button onclick="openUserModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold">+ Tambah User</button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+              <tr>
+                <th class="p-3">Username</th>
+                <th class="p-3">Nama Lengkap</th>
+                <th class="p-3">Role</th>
+                <th class="p-3">Wilayah</th>
+                <th class="p-3">No. HP</th>
+                <th class="p-3">Status</th>
+                <th class="p-3 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyUsers" class="divide-y"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 2: MASTER WILAYAH -->
+      <section id="tab-wilayah" class="hidden space-y-4">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border flex flex-wrap items-center justify-between gap-3">
+          <input type="text" id="searchWilayah" oninput="renderWilayah()" placeholder="Cari kecamatan atau desa..." class="border rounded-xl px-3 py-2 text-sm w-64">
+          <div class="flex flex-wrap gap-2">
+            <button onclick="downloadTemplate('wilayah')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">Download Template CSV</button>
+            <label class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold cursor-pointer">
+              Import CSV Wilayah
+              <input type="file" accept=".csv" class="hidden" onchange="importWilayahCSV(event)">
+            </label>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto max-h-[65vh]">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-slate-50 text-slate-600 text-xs uppercase sticky top-0">
+              <tr>
+                <th class="p-3">Kode Kec</th>
+                <th class="p-3">Kecamatan</th>
+                <th class="p-3">Desa / Kelurahan</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyWilayah" class="divide-y"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 3: IMPORT SASARAN 3B PER DESA -->
+      <section id="tab-sasaran" class="hidden space-y-4">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+          <h2 class="font-bold text-base text-slate-800">Import Data Sasaran 3B (Per Wilayah Desa)</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">1. Pilih Kecamatan</label>
+              <select id="impKec" onchange="populateDesa('impKec','impDesa')" class="w-full border rounded-xl px-3 py-2 text-sm"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">2. Pilih Desa / Kelurahan</label>
+              <select id="impDesa" class="w-full border rounded-xl px-3 py-2 text-sm"></select>
+            </div>
+            <div class="flex items-end">
+              <label class="flex items-center gap-2 text-sm font-medium text-slate-700 pb-2">
+                <input type="checkbox" id="impAutoVerif" checked class="w-4 h-4 accent-indigo-600">
+                Langsung Set TERVERIFIKASI
+              </label>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 pt-2 border-t">
+            <button onclick="downloadTemplate('sasaran')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">Download Template CSV Sasaran 3B</button>
+            <label class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer">
+              Pilih File CSV untuk Pratinjau
+              <input type="file" accept=".csv" class="hidden" onchange="previewSasaranCSV(event)">
+            </label>
+            <button id="btnSaveSasaran" onclick="simpanSasaranCSV()" class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold">Simpan ke Database</button>
+          </div>
+        </div>
+
+        <div id="previewBox" class="hidden bg-white rounded-2xl shadow-sm border p-4">
+          <p id="previewInfo" class="text-sm font-bold text-indigo-700 mb-3"></p>
+          <div class="overflow-x-auto max-h-80">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-slate-50 uppercase text-slate-600">
+                <tr>
+                  <th class="p-2">Kode Keluarga</th>
+                  <th class="p-2">Nama Sasaran</th>
+                  <th class="p-2">Kategori 3B</th>
+                  <th class="p-2">Alamat Lengkap</th>
+                  <th class="p-2">Kebutuhan Intervensi</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyPreview" class="divide-y"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL TAMBAH / EDIT USER -->
+  <div id="modalUser" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-4">
+      <h3 id="modalUserTitle" class="font-bold text-lg">Tambah User Baru</h3>
+      <form id="formUser" class="space-y-3">
+        <input type="hidden" id="uEditMode">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1">Username</label>
+            <input type="text" id="uUsername" required class="w-full border rounded-xl px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">Password</label>
+            <input type="text" id="uPassword" required class="w-full border rounded-xl px-3 py-2 text-sm">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Nama Lengkap / Instansi</label>
+          <input type="text" id="uNama" required class="w-full border rounded-xl px-3 py-2 text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1">Role</label>
+            <select id="uRole" onchange="toggleWilayahUser()" class="w-full border rounded-xl px-3 py-2 text-sm">
+              <option value="PLKB">PLKB</option>
+              <option value="PIC_DESA">PIC_DESA</option>
+              <option value="OTA">OTA</option>
+              <option value="ADMIN_OPD">ADMIN_OPD</option>
+              <option value="BACKOFFICE">BACKOFFICE</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">No. HP / WA (628...)</label>
+            <input type="text" id="uHp" placeholder="6281234567890" class="w-full border rounded-xl px-3 py-2 text-sm">
+          </div>
+        </div>
+        <div id="uWilayahWrap" class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1">Kecamatan</label>
+            <select id="uKec" onchange="populateDesa('uKec','uDesa', true)" class="w-full border rounded-xl px-3 py-2 text-sm"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">Desa / Kelurahan</label>
+            <select id="uDesa" class="w-full border rounded-xl px-3 py-2 text-sm"></select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeUserModal()" class="px-4 py-2 bg-slate-100 rounded-xl text-sm font-semibold">Batal</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold">Simpan User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script>
+  const SUPABASE_URL = 'https://muygfyzinvfcsbyvvyjr.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11eWdmeXppbnZmY3NieXZ2eWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUyMTc0NjAsImV4cCI6MjExMDc5MzQ2MH0.0mGbtcoxAaGJ2btdhMuh0QNVj4m8Nobuz5yCySgpdqg';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let currentUser = null, allUsers = [], allWilayah = [], pendingSasaran = [];
+
+  // LOGIN
+  document.getElementById('formLogin').onsubmit = async (e) => {
+    e.preventDefault();
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value.trim();
+    const { data, error } = await sb.from('users').select('*').eq('username', u).eq('password', p).eq('role', 'BACKOFFICE').eq('status', 'AKTIF').maybeSingle();
+    if (error || !data) {
+      const err = document.getElementById('loginErr');
+      err.textContent = error ? error.message : 'Username/Password salah atau bukan akun BACKOFFICE.';
+      err.classList.remove('hidden');
+      return;
+    }
+    currentUser = data;
+    document.getElementById('userBadge').textContent = `${data.nama_lengkap} (${data.role})`;
+    document.getElementById('loginBox').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    await loadInitialData();
+  };
+
+  function logout() { location.reload(); }
+
+  function switchTab(name) {
+    ['users','wilayah','sasaran'].forEach(t => {
+      document.getElementById('tab-' + t).classList.toggle('hidden', t !== name);
+      const btn = document.getElementById('tabBtn-' + t);
+      btn.className = t === name
+        ? 'tab-btn px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white'
+        : 'tab-btn px-4 py-2 rounded-xl text-sm font-bold bg-white text-slate-600 hover:bg-slate-50';
+    });
+  }
+
+  async function loadInitialData() {
+    const [resU, resW] = await Promise.all([
+      sb.from('users').select('*').order('role').order('username'),
+      sb.from('master_wilayah').select('*').order('wilayah_kecamatan').order('wilayah_desa_kelurahan')
+    ]);
+    allUsers = resU.data || [];
+    allWilayah = resW.data || [];
+    renderUsers();
+    renderWilayah();
+    populateKecamatan('uKec');
+    populateKecamatan('impKec');
+  }
+
+  // WILAYAH HELPERS
+  function populateKecamatan(selectId) {
+    const kecs = [...new Set(allWilayah.map(w => w.wilayah_kecamatan))];
+    const el = document.getElementById(selectId);
+    el.innerHTML = kecs.map(k => `<option value="${k}">${k}</option>`).join('');
+    if (selectId === 'impKec') populateDesa('impKec', 'impDesa');
+    if (selectId === 'uKec') populateDesa('uKec', 'uDesa', true);
+  }
+
+  function populateDesa(kecId, desaId, includeSemua = false) {
+    const kec = document.getElementById(kecId).value;
+    const desas = allWilayah.filter(w => w.wilayah_kecamatan === kec).map(w => w.wilayah_desa_kelurahan);
+    const el = document.getElementById(desaId);
+    let html = includeSemua ? `<option value="SEMUA">SEMUA (Satu Kecamatan)</option>` : '';
+    html += desas.map(d => `<option value="${d}">${d}</option>`).join('');
+    el.innerHTML = html;
+  }
+
+  // TAB 1: USERS
+  function renderUsers() {
+    const role = document.getElementById('filterRole').value;
+    const q = document.getElementById('searchUser').value.toLowerCase();
+    const filtered = allUsers.filter(u =>
+      (role === 'ALL' || u.role === role) &&
+      (`${u.username} ${u.nama_lengkap} ${u.wilayah_kecamatan} ${u.wilayah_desa_kelurahan}`).toLowerCase().includes(q)
+    );
+    document.getElementById('tbodyUsers').innerHTML = filtered.map(u => `
+      <tr class="hover:bg-slate-50">
+        <td class="p-3 font-mono font-semibold">${u.username}</td>
+        <td class="p-3">${u.nama_lengkap || '-'}</td>
+        <td class="p-3"><span class="px-2 py-1 text-xs font-bold rounded-lg bg-indigo-50 text-indigo-700">${u.role}</span></td>
+        <td class="p-3 text-xs">${u.wilayah_kecamatan || '-'} / ${u.wilayah_desa_kelurahan || '-'}</td>
+        <td class="p-3 text-xs">${u.no_hp || '-'}</td>
+        <td class="p-3"><span class="px-2 py-1 text-xs font-bold rounded-lg ${u.status==='AKTIF'?'bg-emerald-50 text-emerald-700':'bg-red-50 text-red-700'}">${u.status}</span></td>
+        <td class="p-3 text-right space-x-1 whitespace-nowrap">
+          <button onclick="kirimWA('${u.username}')" class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded text-xs font-bold">WA</button>
+          <button onclick="editUser('${u.username}')" class="px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs font-bold">Edit</button>
+          <button onclick="toggleStatusUser('${u.username}','${u.status}')" class="px-2 py-1 bg-slate-200 text-slate-700 rounded text-xs font-bold">${u.status==='AKTIF'?'Nonaktifkan':'Aktifkan'}</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  function openUserModal() {
+    document.getElementById('formUser').reset();
+    document.getElementById('uEditMode').value = '';
+    document.getElementById('uUsername').disabled = false;
+    document.getElementById('modalUserTitle').textContent = 'Tambah User Baru';
+    toggleWilayahUser();
+    document.getElementById('modalUser').classList.remove('hidden');
+  }
+  function closeUserModal() { document.getElementById('modalUser').classList.add('hidden'); }
+
+  function toggleWilayahUser() {
+    const r = document.getElementById('uRole').value;
+    document.getElementById('uWilayahWrap').classList.toggle('hidden', ['ADMIN_OPD','BACKOFFICE','OTA'].includes(r));
+  }
+
+  function editUser(username) {
+    const u = allUsers.find(x => x.username === username);
+    if (!u) return;
+    document.getElementById('uEditMode').value = u.username;
+    document.getElementById('uUsername').value = u.username;
+    document.getElementById('uUsername').disabled = true;
+    document.getElementById('uPassword').value = u.password;
+    document.getElementById('uNama').value = u.nama_lengkap || '';
+    document.getElementById('uRole').value = u.role;
+    document.getElementById('uHp').value = u.no_hp || '';
+    toggleWilayahUser();
+    if (u.wilayah_kecamatan && u.wilayah_kecamatan !== 'SEMUA') {
+      document.getElementById('uKec').value = u.wilayah_kecamatan;
+      populateDesa('uKec', 'uDesa', true);
+      document.getElementById('uDesa').value = u.wilayah_desa_kelurahan || 'SEMUA';
+    }
+    document.getElementById('modalUserTitle').textContent = 'Edit User: ' + u.username;
+    document.getElementById('modalUser').classList.remove('hidden');
+  }
+
+  document.getElementById('formUser').onsubmit = async (e) => {
+    e.preventDefault();
+    const isEdit = document.getElementById('uEditMode').value;
+    const role = document.getElementById('uRole').value;
+    const isGlobal = ['ADMIN_OPD','BACKOFFICE','OTA'].includes(role);
+    const payload = {
+      username: document.getElementById('uUsername').value.trim(),
+      password: document.getElementById('uPassword').value.trim(),
+      nama_lengkap: document.getElementById('uNama').value.trim(),
+      role,
+      no_hp: document.getElementById('uHp').value.trim(),
+      wilayah_kecamatan: isGlobal ? 'SEMUA' : document.getElementById('uKec').value,
+      wilayah_desa_kelurahan: isGlobal ? 'SEMUA' : document.getElementById('uDesa').value,
+      status: 'AKTIF'
+    };
+    const { error } = isEdit
+      ? await sb.from('users').update(payload).eq('username', isEdit)
+      : await sb.from('users').insert(payload);
+    if (error) return alert('Gagal simpan: ' + error.message);
+    closeUserModal();
+    await loadInitialData();
+  };
+
+  async function toggleStatusUser(username, cur) {
+    const next = cur === 'AKTIF' ? 'NONAKTIF' : 'AKTIF';
+    await sb.from('users').update({ status: next }).eq('username', username);
+    await loadInitialData();
+  }
+
+  function kirimWA(username) {
+    const u = allUsers.find(x => x.username === username);
+    if (!u || !u.no_hp) return alert('Nomor HP user belum diisi.');
+    const pesan = `Halo ${u.nama_lengkap}, berikut akses akun Bale Asuh Lotim Anda:\nRole: ${u.role}\nUsername: ${u.username}\nPassword: ${u.password}\nWilayah: ${u.wilayah_kecamatan} - ${u.wilayah_desa_kelurahan}`;
+    window.open(`https://wa.me/${u.no_hp.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(pesan)}`, '_blank');
+  }
+
+  // TAB 2: WILAYAH
+  function renderWilayah() {
+    const q = document.getElementById('searchWilayah').value.toLowerCase();
+    const filtered = allWilayah.filter(w => (`${w.kode_kec} ${w.wilayah_kecamatan} ${w.wilayah_desa_kelurahan}`).toLowerCase().includes(q));
+    document.getElementById('tbodyWilayah').innerHTML = filtered.map(w => `
+      <tr><td class="p-3 font-mono">${w.kode_kec}</td><td class="p-3">${w.wilayah_kecamatan}</td><td class="p-3">${w.wilayah_desa_kelurahan}</td></tr>
+    `).join('');
+  }
+
+  // CSV PARSER & TEMPLATES
+  function parseCSV(text) {
+    const lines = text.trim().split(/\r?\n/);
+    const sep = lines[0].includes(';') ? ';' : ',';
+    const headers = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g,''));
+    return lines.slice(1).filter(l => l.trim()).map(line => {
+      const vals = line.split(sep).map(v => v.trim().replace(/^"|"$/g,''));
+      const obj = {};
+      headers.forEach((h, i) => obj[h] = vals[i] || '');
+      return obj;
+    });
+  }
+
+  function downloadTemplate(type) {
+    let csv = '', filename = '';
+    if (type === 'wilayah') {
+      csv = 'kode_kec,wilayah_kecamatan,wilayah_desa_kelurahan\nSLG,Selong,Kelurahan Selong\nSKT,Sakra Timur,Desa Gelanggang';
+      filename = 'template_master_wilayah.csv';
+    } else if (type === 'users') {
+      csv = 'username,password,nama_lengkap,role,wilayah_kecamatan,wilayah_desa_kelurahan,no_hp,status\nplkb_selong,123456,Budi Santoso,PLKB,Selong,SEMUA,6281234567890,AKTIF';
+      filename = 'template_users.csv';
+    } else {
+      csv = 'kode_keluarga,nama_sasaran,kategori_3b,alamat_lengkap,kebutuhan_intervensi\nKK001,Ibu Siti Aminah,Ibu Hamil KEK,Dusun Utara RT 01,Nutrisi (PMT)';
+      filename = 'template_sasaran_3b_per_desa.csv';
+    }
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+  }
+
+  async function importWilayahCSV(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const rows = parseCSV(await file.text());
+    const { error } = await sb.from('master_wilayah').insert(rows);
+    if (error) return alert('Gagal import wilayah: ' + error.message);
+    alert(`Berhasil mengimpor ${rows.length} data wilayah!`);
+    await loadInitialData();
+  }
+
+  async function importUsersCSV(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const rows = parseCSV(await file.text());
+    const { error } = await sb.from('users').upsert(rows, { onConflict: 'username' });
+    if (error) return alert('Gagal import user: ' + error.message);
+    alert(`Berhasil mengimpor ${rows.length} akun user!`);
+    await loadInitialData();
+  }
+
+  // TAB 3: IMPORT SASARAN 3B PER DESA
+  async function previewSasaranCSV(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const kec = document.getElementById('impKec').value;
+    const desa = document.getElementById('impDesa').value;
+    const wil = allWilayah.find(w => w.wilayah_kecamatan === kec && w.wilayah_desa_kelurahan === desa);
+    const kodeKec = wil ? wil.kode_kec : 'LTM';
+    const statusAwal = document.getElementById('impAutoVerif').checked ? 'TERVERIFIKASI' : 'MENUNGGU_VERIFIKASI';
+
+    const rows = parseCSV(await file.text());
+    pendingSasaran = rows.map((r, idx) => ({
+      id_sasaran_anonim: `SAS-${kodeKec}-${Date.now().toString().slice(-4)}${idx+1}`,
+      kode_keluarga: r.kode_keluarga,
+      nama_sasaran: r.nama_sasaran,
+      kategori_3b: r.kategori_3b,
+      wilayah_kecamatan: kec,
+      wilayah_desa_kelurahan: desa,
+      alamat_lengkap: r.alamat_lengkap,
+      kebutuhan_intervensi: r.kebutuhan_intervensi || 'Nutrisi (PMT)',
+      status_verifikasi: statusAwal,
+      input_by: currentUser.username
+    }));
+
+    document.getElementById('previewInfo').textContent = `Pratinjau: ${pendingSasaran.length} data sasaran siap diimpor ke ${kec} — ${desa} (${statusAwal})`;
+    document.getElementById('tbodyPreview').innerHTML = pendingSasaran.map(s => `
+      <tr><td class="p-2">${s.kode_keluarga}</td><td class="p-2 font-semibold">${s.nama_sasaran}</td><td class="p-2">${s.kategori_3b}</td><td class="p-2">${s.alamat_lengkap}</td><td class="p-2">${s.kebutuhan_intervensi}</td></tr>
+    `).join('');
+    document.getElementById('previewBox').classList.remove('hidden');
+    document.getElementById('btnSaveSasaran').classList.remove('hidden');
+  }
+
+  async function simpanSasaranCSV() {
+    if (!pendingSasaran.length) return;
+    const { error } = await sb.from('data_sasaran_3b').insert(pendingSasaran);
+    if (error) return alert('Gagal simpan sasaran: ' + error.message);
+    alert(`Berhasil mengimpor ${pendingSasaran.length} data sasaran 3B!`);
+    pendingSasaran = [];
+    document.getElementById('previewBox').classList.add('hidden');
+    document.getElementById('btnSaveSasaran').classList.add('hidden');
+  }
+</script>
+</body>
+</html>
